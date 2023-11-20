@@ -1,13 +1,12 @@
 #include <GLFW/glfw3.h>
 
-class WindowInit {
+class WindowControl {
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 
 public:
     GLFWwindow* window;
-    WindowInit(void* appPointer);
-    GLFWwindow* initWindow(void* appPointer);
+    WindowControl(void* appPointer);
     void destroyWindow(GLFWwindow* window);
-    ~WindowInit();
+    ~WindowControl();
 };

@@ -156,11 +156,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="vulkanControl.cpp" />
     <ClCompile Include="vulkanTexture.cpp" />
-    <ClCompile Include="windowInit.cpp" />
+    <ClCompile Include="windowControl.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="windowInit.h" />
+    <ClInclude Include="vulkanControl.h" />
+    <ClInclude Include="windowControl.h" />
     <ClInclude Include="vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
