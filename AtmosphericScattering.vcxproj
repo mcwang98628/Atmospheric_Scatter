@@ -156,6 +156,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="vulkanTexture.cpp" />
+    <ClCompile Include="windowInit.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="windowInit.h" />
+    <ClInclude Include="vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
