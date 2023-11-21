@@ -161,6 +161,7 @@
     <ClCompile Include="windowControl.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="helper.h" />
     <ClInclude Include="vulkanControl.h" />
     <ClInclude Include="windowControl.h" />
     <ClInclude Include="vertex.h" />
