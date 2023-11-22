@@ -5,19 +5,6 @@
 #include "helper.h"
 
 class VulkanControl {
-#ifdef NDEBUG
-    const bool enableValidationLayers = false;
-#else
-    const bool enableValidationLayers = true;
-#endif
-    const std::vector<const char*> validationLayers = {
-        "VK_LAYER_KHRONOS_validation"
-    };
-
-    const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
-
 public:
     VkInstance instance;
     VkSurfaceKHR surface;
@@ -72,9 +59,9 @@ public:
     std::vector<VkFence> inFlightFences;
 
     VulkanControl();
-    VkInstance createInstance();
+    void createInstance();
     void setupDebugMessenger();
-    VkSurfaceKHR createSurface(GLFWwindow* window);
+    void createSurface(GLFWwindow* window);
     VkPhysicalDevice pickPhysicalDevice();
     VkDevice createLogicalDevice();
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
@@ -99,9 +86,9 @@ public:
     void createCommandBuffers();
     void createSyncObjects();
     void updateUniformBuffer(uint32_t currentImage);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, std::vector<uint32_t> index);
     void recreateSwapChain(GLFWwindow* window);
     void cleanUp();
-
     ~VulkanControl();
 
 private:

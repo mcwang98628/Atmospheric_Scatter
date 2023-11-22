@@ -5,6 +5,19 @@
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
+#ifdef NDEBUG
+    const bool enableValidationLayers = false;
+#else
+    const bool enableValidationLayers = true;
+#endif
+
+const std::vector<const char*> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
 typedef struct QueueFamilyIndices{
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
