@@ -41,6 +41,12 @@ public:
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
 
+    VkCommandPool commandPool;
+
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
+
     VulkanControl();
     VkInstance createInstance();
     void setupDebugMessenger();
@@ -54,7 +60,11 @@ public:
     void createRenderPass();
     void createDescriptorSetLayout();
     void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath);
+    void createCommandPool();
     VkFormat findDepthFormat();
+    void createDepthResources();
+    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     void cleanUp();
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);

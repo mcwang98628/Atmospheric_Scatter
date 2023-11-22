@@ -172,8 +172,14 @@ private:
         pipelineLayout = vulkanController->pipelineLayout;
         graphicsPipeline = vulkanController->graphicsPipeline;
 
-        createCommandPool();
-        createDepthResources();
+        vulkanController->createCommandPool();
+        commandPool = vulkanController->commandPool;
+
+        vulkanController->createDepthResources();
+        depthImage = vulkanController->depthImage;
+        depthImageMemory = vulkanController->depthImageMemory;
+        depthImageView = vulkanController->depthImageView;
+
         createFramebuffers();
         createTextureImage();
         createTextureImageView();
@@ -278,7 +284,7 @@ private:
 
         vulkanController->createSwapChain();
         vulkanController->createImageViews();
-        createDepthResources();
+        vulkanController->createDepthResources();
         createFramebuffers();
     }
 
@@ -305,43 +311,6 @@ private:
             }
         }
     }
-
-    void createCommandPool() {
-        QueueFamilyIndices queueFamilyIndices = vulkanController->findQueueFamilies(physicalDevice);
-
-        VkCommandPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-
-        if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create graphics command pool!");
-        }
-    }
-
-    void createDepthResources() {
-        VkFormat depthFormat = vulkanController->findDepthFormat();
-
-        createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
-        depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
-    }
-
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
-        for (VkFormat format : candidates) {
-            VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
-
-            if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
-                return format;
-            } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
-                return format;
-            }
-        }
-
-        throw std::runtime_error("failed to find supported format!");
-    }
-
-
 
     bool hasStencilComponent(VkFormat format) {
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
@@ -954,8 +923,6 @@ private:
         return shaderModule;
     }
 
-
-
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
         for (const auto& availablePresentMode : availablePresentModes) {
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -965,10 +932,6 @@ private:
 
         return VK_PRESENT_MODE_FIFO_KHR;
     }
-
-
-
-
 };
 
 int main() {
