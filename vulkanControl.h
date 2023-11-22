@@ -67,6 +67,10 @@ public:
 
     std::vector<VkCommandBuffer> commandBuffers;
 
+    std::vector<VkSemaphore> imageAvailableSemaphores;
+    std::vector<VkSemaphore> renderFinishedSemaphores;
+    std::vector<VkFence> inFlightFences;
+
     VulkanControl();
     VkInstance createInstance();
     void setupDebugMessenger();
@@ -93,6 +97,7 @@ public:
     void createDescriptorPool();
     void createDescriptorSets();
     void createCommandBuffers();
+    void createSyncObjects();
     void cleanUp();
 
 
