@@ -38,6 +38,9 @@ public:
 
     VkDescriptorSetLayout descriptorSetLayout;
 
+    VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
+
     VulkanControl();
     VkInstance createInstance();
     void setupDebugMessenger();
@@ -50,6 +53,7 @@ public:
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createRenderPass();
     void createDescriptorSetLayout();
+    void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath);
     VkFormat findDepthFormat();
     void cleanUp();
 
@@ -70,6 +74,7 @@ private:
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkShaderModule createShaderModule(const std::vector<char>& code);
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
