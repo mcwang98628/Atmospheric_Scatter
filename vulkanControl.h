@@ -98,9 +98,9 @@ public:
     void createDescriptorSets();
     void createCommandBuffers();
     void createSyncObjects();
+    void updateUniformBuffer(uint32_t currentImage);
     void recreateSwapChain(GLFWwindow* window);
     void cleanUp();
-
 
     ~VulkanControl();
 
