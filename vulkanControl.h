@@ -65,6 +65,8 @@ public:
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
 
+    std::vector<VkCommandBuffer> commandBuffers;
+
     VulkanControl();
     VkInstance createInstance();
     void setupDebugMessenger();
@@ -79,7 +81,6 @@ public:
     void createDescriptorSetLayout();
     void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath);
     void createCommandPool();
-    VkFormat findDepthFormat();
     void createDepthResources();
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
     void createFramebuffers();
@@ -91,9 +92,9 @@ public:
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
+    void createCommandBuffers();
     void cleanUp();
 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
     ~VulkanControl();
 
@@ -101,6 +102,7 @@ private:
     VkDebugUtilsMessengerEXT debugMessenger;
     GLFWwindow* curWindow;
 
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     bool checkValidationLayerSupport();
     std::vector<const char*> getRequiredExtensions();
     bool isDeviceSuitable(VkPhysicalDevice device);
@@ -118,6 +120,7 @@ private:
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+    VkFormat findDepthFormat();
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
