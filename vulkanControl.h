@@ -34,6 +34,10 @@ public:
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
+    VkRenderPass renderPass;
+
+    VkDescriptorSetLayout descriptorSetLayout;
+
     VulkanControl();
     VkInstance createInstance();
     void setupDebugMessenger();
@@ -42,6 +46,11 @@ public:
     VkDevice createLogicalDevice();
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
     VkSwapchainKHR createSwapChain();
+    void createImageViews();
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+    void createRenderPass();
+    void createDescriptorSetLayout();
+    VkFormat findDepthFormat();
     void cleanUp();
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
@@ -60,6 +69,7 @@ private:
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);

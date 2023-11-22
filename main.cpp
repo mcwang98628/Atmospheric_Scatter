@@ -156,14 +156,16 @@ private:
         presentQueue = vulkanController->presentQueue;
 
         vulkanController->createSwapChain();
-        swapChain = vulkanController -> swapChain;
+        swapChain = vulkanController->swapChain;
         swapChainImageFormat = vulkanController->swapChainImageFormat;
         swapChainImages = vulkanController->swapChainImages;
         swapChainExtent = vulkanController->swapChainExtent;
         swapChainImageViews = vulkanController->swapChainImageViews;
         swapChainFramebuffers = vulkanController->swapChainFramebuffers;
 
-        createImageViews();
+        vulkanController->createImageViews();
+        swapChainImageViews = vulkanController->swapChainImageViews;
+
         createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
@@ -191,8 +193,6 @@ private:
 
         vkDeviceWaitIdle(device);
     }
-
-
 
     void cleanupSwapChain() {
         vkDestroyImageView(device, depthImageView, nullptr);
@@ -274,18 +274,12 @@ private:
         cleanupSwapChain();
 
         vulkanController->createSwapChain();
-        createImageViews();
+        vulkanController->createImageViews();
         createDepthResources();
         createFramebuffers();
     }
 
-    void createImageViews() {
-        swapChainImageViews.resize(swapChainImages.size());
 
-        for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-            swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
-        }
-    }
 
     void createRenderPass() {
         VkAttachmentDescription colorAttachment{};
@@ -299,7 +293,7 @@ private:
         colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         VkAttachmentDescription depthAttachment{};
-        depthAttachment.format = findDepthFormat();
+        depthAttachment.format = vulkanController->findDepthFormat();
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -532,7 +526,7 @@ private:
     }
 
     void createDepthResources() {
-        VkFormat depthFormat = findDepthFormat();
+        VkFormat depthFormat = vulkanController->findDepthFormat();
 
         createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
         depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
@@ -553,13 +547,7 @@ private:
         throw std::runtime_error("failed to find supported format!");
     }
 
-    VkFormat findDepthFormat() {
-        return findSupportedFormat(
-            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-        );
-    }
+
 
     bool hasStencilComponent(VkFormat format) {
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
@@ -1140,7 +1128,7 @@ private:
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
 
-        VkSwapchainKHR swapChains[] = {swapChain};
+        VkSwapchainKHR swapChains[] = { swapChain};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
 
