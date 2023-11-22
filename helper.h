@@ -3,6 +3,7 @@
 #include <glm/gtx/hash.hpp>
 #include <optional>
 
+#define MAX_FRAMES_IN_FLIGHT 2
 
 typedef struct QueueFamilyIndices{
     std::optional<uint32_t> graphicsFamily;
@@ -58,3 +59,9 @@ typedef struct Vertex {
         return pos == other.pos && color == other.color && texCoord == other.texCoord;
     }
 } Vertex;
+
+typedef struct UniformBufferObject {
+    alignas(16) glm::mat4 model;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 proj;
+} UniformBufferObject;

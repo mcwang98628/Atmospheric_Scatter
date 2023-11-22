@@ -58,6 +58,12 @@ public:
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
 
+    std::vector<VkBuffer> uniformBuffers;
+    std::vector<VkDeviceMemory> uniformBuffersMemory;
+    std::vector<void*> uniformBuffersMapped;
+
+    VkDescriptorPool descriptorPool;
+
     VulkanControl();
     VkInstance createInstance();
     void setupDebugMessenger();
@@ -84,6 +90,8 @@ public:
     void createVertexBuffer(std::vector<Vertex> verts);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void createIndexBuffer(std::vector<uint32_t> index);
+    void createUniformBuffers();
+    void createDescriptorPool();
     void cleanUp();
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);

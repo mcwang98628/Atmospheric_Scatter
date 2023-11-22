@@ -33,7 +33,7 @@ const uint32_t HEIGHT = 600;
 const std::string MODEL_PATH = "models/viking_room.obj";
 const std::string TEXTURE_PATH = "textures/viking_room.png";
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
+
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
@@ -51,12 +51,6 @@ namespace std {
         }
     };
 }
-
-struct UniformBufferObject {
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
-};
 
 class HelloTriangleApplication {
 public:
@@ -199,8 +193,14 @@ private:
         indexBuffer = vulkanController->indexBuffer;
         indexBufferMemory = vulkanController->indexBufferMemory;
 
-        createUniformBuffers();
-        createDescriptorPool();
+        vulkanController->createUniformBuffers();
+        uniformBuffers = vulkanController->uniformBuffers;
+        uniformBuffersMemory = vulkanController->uniformBuffersMemory;
+        uniformBuffersMapped = vulkanController->uniformBuffersMapped;
+
+        vulkanController->createDescriptorPool();
+        descriptorPool = vulkanController->descriptorPool;
+
         createDescriptorSets();
         createCommandBuffers();
         createSyncObjects();
@@ -304,10 +304,6 @@ private:
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
-    void createTextureImageView() {
-        textureImageView = vulkanController->createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
-    }
-
     void loadModel(std::string modelPath) {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
@@ -344,20 +340,6 @@ private:
 
                 indices.push_back(uniqueVertices[vertex]);
             }
-        }
-    }
-
-    void createUniformBuffers() {
-        VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-        uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-        uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-        uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
-
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
-
-            vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
         }
     }
 
