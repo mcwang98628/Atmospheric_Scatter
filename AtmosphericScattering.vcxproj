@@ -155,6 +155,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="keyboardEvent.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="readFile.cpp" />
     <ClCompile Include="vulkanControl.cpp" />
@@ -162,6 +163,7 @@
     <ClCompile Include="windowControl.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="keyboardEvent.h" />
     <ClInclude Include="readFile.h" />
     <ClInclude Include="helper.h" />
     <ClInclude Include="vulkanControl.h" />

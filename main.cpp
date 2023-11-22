@@ -9,6 +9,8 @@
 
 #include "windowControl.h"
 #include "vulkanControl.h"
+#include "keyboardEvent.h"
+
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -49,6 +51,7 @@ private:
         windowController = new WindowControl(this);
         window = windowController->window;
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+        glfwSetKeyCallback(window, KeyboardEvent::keyEvent);
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -61,44 +64,26 @@ private:
         vulkanController->createInstance();
         vulkanController->setupDebugMessenger();
         vulkanController->createSurface(window);
-
         vulkanController->pickPhysicalDevice();
         vulkanController->createLogicalDevice();
-
         vulkanController->createSwapChain();
-
         vulkanController->createImageViews();
-
         vulkanController->createRenderPass();
         vulkanController->createDescriptorSetLayout();
         vulkanController->createGraphicsPipeline("shaders/vert.spv", "shaders/frag.spv");
-
         vulkanController->createCommandPool();
-
         vulkanController->createDepthResources();
-
         vulkanController->createFramebuffers();
-
         vulkanController->createTextureImage(TEXTURE_PATH);
-
         vulkanController->createTextureImageView();
-
         vulkanController->createTextureSampler();
-
         loadModel(MODEL_PATH);
-
         vulkanController->createVertexBuffer(vertices);
-
         vulkanController->createIndexBuffer(indices);
-
         vulkanController->createUniformBuffers();
-
         vulkanController->createDescriptorPool();
-
         vulkanController->createDescriptorSets();
-
         vulkanController->createCommandBuffers();
-
         vulkanController->createSyncObjects();
     }
 
@@ -119,7 +104,6 @@ private:
 
         glfwTerminate();
     }
-
 
     bool hasStencilComponent(VkFormat format) {
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
