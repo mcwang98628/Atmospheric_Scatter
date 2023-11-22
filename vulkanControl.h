@@ -55,6 +55,8 @@ public:
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
 
     VulkanControl();
     VkInstance createInstance();
@@ -81,6 +83,7 @@ public:
     void createTextureSampler();
     void createVertexBuffer(std::vector<Vertex> verts);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void createIndexBuffer(std::vector<uint32_t> index);
     void cleanUp();
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
