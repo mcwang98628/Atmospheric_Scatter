@@ -3,6 +3,7 @@
 #include <iostream>
 #include <optional>
 #include "helper.h"
+#include "camera.h"
 
 class VulkanControl {
 public:
@@ -58,6 +59,8 @@ public:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
+    Camera camera;
+
     VulkanControl();
     void createInstance();
     void setupDebugMessenger();
@@ -88,6 +91,7 @@ public:
     void updateUniformBuffer(uint32_t currentImage);
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, std::vector<uint32_t> index);
     void recreateSwapChain(GLFWwindow* window);
+    void createCamera(GLFWwindow* window);
     void cleanUp();
     ~VulkanControl();
 

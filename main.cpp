@@ -9,7 +9,6 @@
 
 #include "windowControl.h"
 #include "vulkanControl.h"
-#include "keyboardEvent.h"
 
 
 const uint32_t WIDTH = 800;
@@ -51,7 +50,6 @@ private:
         windowController = new WindowControl(this);
         window = windowController->window;
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-        glfwSetKeyCallback(window, KeyboardEvent::keyEvent);
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -78,6 +76,7 @@ private:
         vulkanController->createTextureImageView();
         vulkanController->createTextureSampler();
         loadModel(MODEL_PATH);
+        vulkanController->createCamera(window);
         vulkanController->createVertexBuffer(vertices);
         vulkanController->createIndexBuffer(indices);
         vulkanController->createUniformBuffers();
