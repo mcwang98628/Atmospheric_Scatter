@@ -24,6 +24,7 @@ const std::string TEXTURE_PATH = "textures/viking_room.png";
 // Camera
 Camera camera = {};
 bool firstMouse = true;
+bool enableMouseCallback = true;
 float lastX =  WIDTH / 2.0;
 float lastY =  HEIGHT / 2.0;
 
@@ -239,6 +240,18 @@ private:
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
+        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        {
+            if (enableMouseCallback)
+            {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                enableMouseCallback = false;
+            } else {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                enableMouseCallback = true;
+            }
+        }
+
         float cameraSpeed = static_cast<float>(2.5 * deltaTime);
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             camera.moveForward(cameraSpeed);
@@ -272,13 +285,15 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
     lastX = xpos;
     lastY = ypos;
-
-    camera.UpdateLookAt(xoffset, yoffset);
+    
+    if (enableMouseCallback)
+        camera.UpdateLookAt(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.UpdateFov(static_cast<float>(yoffset));
+    if (enableMouseCallback)
+        camera.UpdateFov(static_cast<float>(yoffset));
 }
 
 int main() {
