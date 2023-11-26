@@ -10,12 +10,26 @@
 #include "windowControl.h"
 #include "vulkanControl.h"
 
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
+// settings
+#define MOUSE_SENSITIVITY 0.1f
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
 const std::string MODEL_PATH = "models/viking_room.obj";
 const std::string TEXTURE_PATH = "textures/viking_room.png";
+
+// Camera
+Camera camera = {};
+bool firstMouse = true;
+float lastX =  WIDTH / 2.0;
+float lastY =  HEIGHT / 2.0;
+
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 namespace std {
     template<> struct hash<Vertex> {
@@ -35,9 +49,9 @@ public:
     }
 
 private:
-    GLFWwindow* window;
-    WindowControl* windowController;
-    VulkanControl* vulkanController;
+    GLFWwindow* window = nullptr;
+    WindowControl* windowController = nullptr;
+    VulkanControl* vulkanController = nullptr;
 
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
@@ -50,6 +64,10 @@ private:
         windowController = new WindowControl(this);
         window = windowController->window;
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+        glfwSetCursorPosCallback(window, mouse_callback);
+        glfwSetScrollCallback(window, scroll_callback);
+        
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -76,7 +94,7 @@ private:
         vulkanController->createTextureImageView();
         vulkanController->createTextureSampler();
         loadModel(MODEL_PATH);
-        vulkanController->createCamera(window);
+        vulkanController->createCamera(&camera);
         vulkanController->createVertexBuffer(vertices);
         vulkanController->createIndexBuffer(indices);
         vulkanController->createUniformBuffers();
@@ -88,8 +106,13 @@ private:
 
     void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
+            const auto currTime = static_cast<float>(glfwGetTime());
+            deltaTime = currTime - lastFrame;
+            lastFrame = currTime;
+            
             glfwPollEvents();
             drawFrame();
+            processInput();
         }
 
         vkDeviceWaitIdle(vulkanController->device);
@@ -210,7 +233,53 @@ private:
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
+
+    void processInput()
+    {
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+
+        float cameraSpeed = static_cast<float>(2.5 * deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.moveForward(cameraSpeed);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.moveForward(-cameraSpeed);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.moveHorizontal(cameraSpeed);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.moveHorizontal(-cameraSpeed);
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+            camera.moveVertical(cameraSpeed);
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+            camera.moveVertical(-cameraSpeed);
+    }
+
 };
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+    
+    float xoffset = (xpos - lastX) * MOUSE_SENSITIVITY;
+    float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.UpdateLookAt(xoffset, yoffset);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.UpdateFov(static_cast<float>(yoffset));
+}
 
 int main() {
     HelloTriangleApplication app;

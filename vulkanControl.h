@@ -59,7 +59,7 @@ public:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
-    Camera camera;
+    Camera* camera;
 
     VulkanControl();
     void createInstance();
@@ -91,7 +91,7 @@ public:
     void updateUniformBuffer(uint32_t currentImage);
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, std::vector<uint32_t> index);
     void recreateSwapChain(GLFWwindow* window);
-    void createCamera(GLFWwindow* window);
+    void createCamera(Camera* rawCamera);
     void cleanUp();
     ~VulkanControl();
 

@@ -9,12 +9,24 @@ public:
     glm::vec3 pos;
     glm::vec3 up;
     glm::vec3 view;
+    glm::vec3 right;
     glm::vec3 proj;
+
+    glm::vec3 worldUp;
+    
+    float yaw;
+    float pitch;
+    float fov;
     float speed;
 	
-    void init(GLFWwindow* window);
-private:
+    void moveForward(float velocity);
     void moveHorizontal(float velocity);
     void moveVertical(float velocity);
+    
+    void UpdateLookAt(float xoffset, float yoffset);
+    void UpdateFov(float yoffset);
+
+private:
+    void updateCameraVectors();
 };
 #endif
