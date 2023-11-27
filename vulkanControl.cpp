@@ -303,7 +303,7 @@ void VulkanControl::createDescriptorSetLayout() {
     }
 }
 
-void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath) {
+void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath, bool depthTest) {
     auto vertShaderCode = FileReader::readFile(vertShaderPath);
     auto fragShaderCode = FileReader::readFile(fragShaderPath);
 
@@ -362,9 +362,9 @@ void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::stri
 
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthTestEnable = depthTest ? VK_TRUE : VK_FALSE;
+    depthStencil.depthWriteEnable = depthTest ? VK_TRUE : VK_FALSE;
+    depthStencil.depthCompareOp = depthTest ? VK_COMPARE_OP_LESS : VK_COMPARE_OP_ALWAYS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.stencilTestEnable = VK_FALSE;
 
@@ -418,10 +418,13 @@ void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::stri
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+    VkPipeline currentPipeline;
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &currentPipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
 
+    graphicsPipelines.push_back(currentPipeline);
     vkDestroyShaderModule(device, fragShaderModule, nullptr);
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
@@ -614,13 +617,17 @@ void VulkanControl::createVertexBuffer(std::vector<Vertex> verts) {
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, verts.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
+    VkBuffer currentVertexBuffer;
+    VkDeviceMemory currentVertexBufferMemory;
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, currentVertexBuffer, currentVertexBufferMemory);
 
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, currentVertexBuffer, bufferSize);
 
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
+    vertexBufferMemories.push_back(currentVertexBufferMemory);
+    vertexBuffers.push_back(currentVertexBuffer);
 }
 
 void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
@@ -654,11 +661,6 @@ void VulkanControl::createIndexBuffer(std::vector<uint32_t> index) {
 }
 
 void VulkanControl::createCamera(GLFWwindow* window) {
-    camera = Camera();
-    camera.pos = glm::vec3(2.0f, 2.0f, 2.0f);
-    camera.speed = 0;
-    camera.view = glm::vec3(0.0f, 0.0f, 0.0f);
-    camera.up = glm::vec3(0.0f, 0.0f, 1.0f);
     camera.init(window);
 }
 
@@ -782,9 +784,9 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(camera.pos, camera.view, glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(camera.pos, camera.view, camera.up);
+    ubo.proj = glm::perspective(camera.fovY, swapChainExtent.width / (float)swapChainExtent.height, camera.near, camera.far);
     ubo.proj[1][1] *= -1;
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
@@ -806,7 +808,7 @@ void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     renderPassInfo.renderArea.extent = swapChainExtent;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    clearValues[0].color = { {0.68f, 0.85f, 0.90f, 1.0f} };
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -814,7 +816,9 @@ void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+    for (auto pipeline : graphicsPipelines) {
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    }
 
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -830,9 +834,11 @@ void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    VkBuffer vertexBuffers[] = { vertexBuffer };
+    VkBuffer allVertexBuffers[100];
+    std::copy(vertexBuffers.begin(), vertexBuffers.end(), allVertexBuffers);
+
     VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, allVertexBuffers, offsets);
 
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
@@ -866,7 +872,9 @@ void VulkanControl::recreateSwapChain(GLFWwindow* window) {
 void VulkanControl::cleanUp() {
     cleanupSwapChain();
 
-    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    for (auto pipeline : graphicsPipelines) {
+        vkDestroyPipeline(device, pipeline, nullptr);
+    }
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
 
@@ -888,8 +896,12 @@ void VulkanControl::cleanUp() {
     vkDestroyBuffer(device, indexBuffer, nullptr);
     vkFreeMemory(device, indexBufferMemory, nullptr);
 
-    vkDestroyBuffer(device, vertexBuffer, nullptr);
-    vkFreeMemory(device, vertexBufferMemory, nullptr);
+    for (auto bu : vertexBuffers) {
+        vkDestroyBuffer(device, bu, nullptr);
+    }
+    for (auto vbm : vertexBufferMemories) {
+        vkFreeMemory(device, vbm, nullptr);
+    }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);

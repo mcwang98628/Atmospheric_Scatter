@@ -11,6 +11,10 @@ public:
     glm::vec3 view;
     glm::vec3 proj;
     float speed;
+    float fovY;
+    float near;
+    float far;
+
 	
     void init(GLFWwindow* window);
 private:

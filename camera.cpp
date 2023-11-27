@@ -37,7 +37,14 @@ void Camera::moveVertical(float velocity) {
 
 void Camera::init(GLFWwindow* window) {
 	glfwSetKeyCallback(window, keyEvent);
+	pos = glm::vec3(2.0f, 2.0f, 2.0f);
+	speed = 0;
+	view = glm::vec3(0.0f, 0.0f, 0.0f);
+	up = glm::vec3(0.0f, 0.0f, 1.0f);
+	fovY = glm::radians(45.0f);
+	near = .1f;
+	far = 100.0f;
+
 	em.on("horizontal", [this](float velocity) { this->moveHorizontal(velocity); });
 	em.on("vertical", [this](float velocity) { this->moveVertical(velocity); });
-
 }

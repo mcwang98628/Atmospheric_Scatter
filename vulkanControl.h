@@ -27,7 +27,7 @@ public:
     VkDescriptorSetLayout descriptorSetLayout;
 
     VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline;
+    std::vector<VkPipeline> graphicsPipelines;
 
     VkCommandPool commandPool;
 
@@ -41,8 +41,8 @@ public:
 
     VkSampler textureSampler;
 
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
+    std::vector<VkBuffer> vertexBuffers;
+    std::vector<VkDeviceMemory> vertexBufferMemories;
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
 
@@ -73,7 +73,7 @@ public:
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createRenderPass();
     void createDescriptorSetLayout();
-    void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath);
+    void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath, bool depthTest);
     void createCommandPool();
     void createDepthResources();
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);

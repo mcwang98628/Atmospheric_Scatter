@@ -14,7 +14,7 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-const std::string MODEL_PATH = "models/viking_room.obj";
+const std::string MODEL_PATH = "models/terrain.obj";
 const std::string TEXTURE_PATH = "textures/viking_room.png";
 
 namespace std {
@@ -40,7 +40,10 @@ private:
     VulkanControl* vulkanController;
 
     std::vector<Vertex> vertices;
+    std::vector<Vertex> skyVertices;
     std::vector<uint32_t> indices;
+    std::vector<uint32_t> skyIndecis;
+
 
     uint32_t currentFrame = 0;
 
@@ -56,10 +59,32 @@ private:
         auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
+    void initSky() {
+        Vertex v1;
+        Vertex v2;
+        Vertex v3;
+        Vertex v4;
+        v1.pos = { -1.0f, -1.0f, 0.0f };
+        v2.pos = { 1.0f, -1.0f, 0.0f };
+        v3.pos = { -1.0f, 1.0f, 0.0f };
+        v4.pos = { 1.0f, 1.0f, 0.0f };
+
+        skyVertices.push_back(v1);
+        skyVertices.push_back(v2);
+        skyVertices.push_back(v3);
+        skyVertices.push_back(v4);
+        skyIndecis.push_back(0);
+        skyIndecis.push_back(1);
+        skyIndecis.push_back(2);
+        skyIndecis.push_back(3);
+
+
+    }
 
     void initVulkan() {
         vulkanController = new VulkanControl();
         vulkanController->createInstance();
+        initSky();
         vulkanController->setupDebugMessenger();
         vulkanController->createSurface(window);
         vulkanController->pickPhysicalDevice();
@@ -68,17 +93,21 @@ private:
         vulkanController->createImageViews();
         vulkanController->createRenderPass();
         vulkanController->createDescriptorSetLayout();
-        vulkanController->createGraphicsPipeline("shaders/vert.spv", "shaders/frag.spv");
+        //vulkanController->createGraphicsPipeline("shaders/vert.spv", "shaders/frag.spv", true);
+        vulkanController->createGraphicsPipeline("shaders/sky.vert.spv", "shaders/sky.frag.spv", false);
         vulkanController->createCommandPool();
         vulkanController->createDepthResources();
         vulkanController->createFramebuffers();
         vulkanController->createTextureImage(TEXTURE_PATH);
         vulkanController->createTextureImageView();
         vulkanController->createTextureSampler();
-        loadModel(MODEL_PATH);
+        //loadModel(MODEL_PATH);
         vulkanController->createCamera(window);
-        vulkanController->createVertexBuffer(vertices);
-        vulkanController->createIndexBuffer(indices);
+        vulkanController->createVertexBuffer(skyVertices);
+        //vulkanController->createVertexBuffer(vertices);
+
+        vulkanController->createIndexBuffer(skyIndecis);
+        //drawSky();
         vulkanController->createUniformBuffers();
         vulkanController->createDescriptorPool();
         vulkanController->createDescriptorSets();
