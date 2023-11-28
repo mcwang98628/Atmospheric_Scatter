@@ -18,7 +18,9 @@ public:
     float pitch;
     float fov;
     float speed;
-	
+    float near;
+    float far;
+
     void moveForward(float velocity);
     void moveHorizontal(float velocity);
     void moveVertical(float velocity);

@@ -283,7 +283,7 @@ void VulkanControl::createDescriptorSetLayout() {
     uboLayoutBinding.descriptorCount = 1;
     uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding.pImmutableSamplers = nullptr;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
     samplerLayoutBinding.binding = 1;
@@ -351,7 +351,7 @@ void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::stri
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -634,6 +634,9 @@ void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
 }
 
 void VulkanControl::createIndexBuffer(std::vector<uint32_t> index) {
+    if (index.empty()) {
+        return;
+    }
     VkDeviceSize bufferSize = sizeof(index[0]) * index.size();
 
     VkBuffer stagingBuffer;
@@ -656,13 +659,15 @@ void VulkanControl::createIndexBuffer(std::vector<uint32_t> index) {
 void VulkanControl::createCamera(Camera* rawCamera) {
     rawCamera->worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
     
-    rawCamera->pos = glm::vec3(0.0f, 0.0f, 3.0f);
+    rawCamera->pos = glm::vec3(0.0f, 6359.f, 30.f);
     rawCamera->view = glm::vec3(0.0f, 0.0f, -1.0f);
     rawCamera->up = glm::vec3(0.0f, 1.0f, 0.0f);
     rawCamera->right = glm::cross(rawCamera->view, rawCamera->up);
     rawCamera->speed = 0;
     rawCamera->fov = 45.f;
-    
+    rawCamera->near = 0.01;
+    rawCamera->far = 2200.f;
+
     camera = rawCamera;
 }
 
@@ -786,10 +791,34 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(camera->pos, camera->pos + camera->view, camera->up);
-    ubo.proj = glm::perspective(glm::radians(camera->fov), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    glm::mat4 m_modelAtmos = glm::scale(glm::mat4(1.0f), glm::vec3(6420., 6420., 6420.));
+    glm::mat4 m_modelEarth = glm::scale(glm::mat4(1.0f), glm::vec3(6360., 6360., 6360.));
+
+    ubo.M = m_modelAtmos;
+    glm::mat4 lookat = glm::lookAt(camera->pos, camera->view + camera->pos, camera->up);
+    glm::mat4 proj = glm::perspective(camera->fov, swapChainExtent.width / (float)swapChainExtent.height, camera->near, camera->far);
+
+    ubo.MVP = proj * lookat * m_modelAtmos;
+
+    ubo.viewPos = camera->pos;
+    ubo.sunPos = glm::vec3(0, 1, 0);
+
+    ubo.viewSamples = 16;
+    ubo.lightSamples = 8;
+
+    ubo.I_sun = 20.f;
+    ubo.R_e = 6360.;
+    ubo.R_a = 6420.;
+    ubo.beta_R = glm::vec3(5.8e-3f, 13.5e-3f, 33.1e-3f);
+    ubo.beta_M = 21e-3f;
+    ubo.H_R = 7.994;
+    ubo.H_M = 1.200;
+    ubo.g = 0.888;
+
+    ubo.toneMappingFactor = 1.0;
+    // ubo.view = glm::lookAt(camera->pos, camera->pos + camera->view, camera->up);
+    // ubo.proj = glm::perspective(glm::radians(camera->fov), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+    // ubo.proj[1][1] *= -1;
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
@@ -810,7 +839,7 @@ void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     renderPassInfo.renderArea.extent = swapChainExtent;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    clearValues[0].color = { {0.f, 0.f, 0.f, 1.0f} };
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -838,11 +867,15 @@ void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    if (indexBuffer != NULL) {
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    }
 
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(index.size()), 1, 0, 0, 0);
+    if (!index.empty()) {
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(index.size()), 1, 0, 0, 0);
+    }
 
     vkCmdEndRenderPass(commandBuffer);
 
