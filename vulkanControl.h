@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <optional>
+
+#include "Atmosphere.h"
 #include "helper.h"
 #include "camera.h"
 
@@ -60,6 +62,8 @@ public:
     std::vector<VkFence> inFlightFences;
 
     Camera* camera;
+    Sun* sun;
+    Atmosphere* atmosphere;
 
     VulkanControl();
     void createInstance();
@@ -92,6 +96,8 @@ public:
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, std::vector<uint32_t> index);
     void recreateSwapChain(GLFWwindow* window);
     void createCamera(Camera* rawCamera);
+    void CreateSun(Sun* Sun);
+    void CreateAtmosphere(Atmosphere* rawAtmosphere);
     void cleanUp();
     ~VulkanControl();
 

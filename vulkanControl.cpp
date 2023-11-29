@@ -18,8 +18,9 @@
 #include <GLFW/glfw3.h>
 
 #include "VulkanControl.h"
-#include "readFile.h";
+#include "readFile.h"
 #include "camera.h"
+#include "Atmosphere.h"
 
 VulkanControl::VulkanControl() {
 
@@ -661,14 +662,28 @@ void VulkanControl::createCamera(Camera* rawCamera) {
     
     rawCamera->pos = glm::vec3(0.0f, 6359.f, 30.f);
     rawCamera->view = glm::vec3(0.0f, 0.0f, -1.0f);
-    rawCamera->up = glm::vec3(0.0f, 1.0f, 0.0f);
+    rawCamera->up = glm::vec3(0.0f, -1.0f, 0.0f);
     rawCamera->right = glm::cross(rawCamera->view, rawCamera->up);
     rawCamera->speed = 0;
     rawCamera->fov = 45.f;
     rawCamera->near = 0.01;
     rawCamera->far = 2200.f;
+    rawCamera->yaw = -90.f;
+    rawCamera->pitch = 0.f;
 
     camera = rawCamera;
+}
+
+void VulkanControl::CreateSun(Sun* rawSun) {
+    rawSun->I_sun = glm::vec3(20.f);
+    rawSun->sunAngle = glm::radians(45.f);
+    rawSun->sunDir = glm::vec3(0.0f, 1.0f, 1.0f);
+    
+    sun = rawSun;
+}
+
+void VulkanControl::CreateAtmosphere(Atmosphere* rawAtmosphere) {
+    atmosphere = rawAtmosphere;
 }
 
 void VulkanControl::createUniformBuffers() {
@@ -801,7 +816,8 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     ubo.MVP = proj * lookat * m_modelAtmos;
 
     ubo.viewPos = camera->pos;
-    ubo.sunPos = glm::vec3(0, 1, 0);
+    
+    ubo.sunPos = sun->sunDir;
 
     ubo.viewSamples = 16;
     ubo.lightSamples = 8;
@@ -811,14 +827,12 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     ubo.R_a = 6420.;
     ubo.beta_R = glm::vec3(5.8e-3f, 13.5e-3f, 33.1e-3f);
     ubo.beta_M = 21e-3f;
-    ubo.H_R = 7.994;
-    ubo.H_M = 1.200;
-    ubo.g = 0.888;
+    // ubo.absorb_M = 4.4e-3f;
+    ubo.H_R = 7.994f;
+    ubo.H_M = 1.200f;
+    ubo.g = 0.888f;
 
     ubo.toneMappingFactor = 1.0;
-    // ubo.view = glm::lookAt(camera->pos, camera->pos + camera->view, camera->up);
-    // ubo.proj = glm::perspective(glm::radians(camera->fov), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
-    // ubo.proj[1][1] *= -1;
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }

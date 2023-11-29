@@ -21,15 +21,11 @@ void Camera::UpdateLookAt(float xoffset, float yoffset)
 	yaw += xoffset;
 	pitch += yoffset;
 	
-	//// make sure that when pitch is out of bounds, screen doesn't get flipped
-	//if (pitch > 89.0f)
-	//	pitch = 89.0f;
-	//if (pitch < -89.0f)
-	//	pitch = -89.0f;
-	//
-
-	//pitch = 20;
-	//yaw = 270;
+	// make sure that when pitch is out of bounds, screen doesn't get flipped
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
 
 	updateCameraVectors();
 }

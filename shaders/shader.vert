@@ -5,8 +5,6 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
 
 layout(location = 0) out vec3 fsPosition;
-layout(location = 1) out vec3 fsNormal;
-layout(location = 2) out vec2 fsTexCoord;
 
 layout(binding = 0) uniform UniformBufferObject {
     mat4 M;     // Model matrix
@@ -25,6 +23,7 @@ layout(binding = 0) uniform UniformBufferObject {
     float R_a;      // Radius of the atmosphere [m]
     vec3  beta_R;   // Rayleigh scattering coefficient
     float beta_M;   // Mie scattering coefficient
+//    float absorb_M;
     float H_R;      // Rayleigh scale height
     float H_M;      // Mie scale height
     float g;        // Mie scattering direction - 
@@ -38,14 +37,4 @@ void main()
     vec4 posVec4 = vec4(position, 1.0);
     fsPosition = vec3(ubo.M * posVec4);
 	gl_Position = ubo.MVP * posVec4;
-
-    // <UNUSED>
-    // TODO precompute normal matrix
-    //mat3 N = transpose(inverse(mat3(M)));
-    //fsNormal = normalize(N * normal);
-    //fsNormal = normalize(vec4(M * vec4(position, 0.0)).xyz);
-
-    // <UNUSED>
-    //fsTexCoord = texCoord;
 }
-
