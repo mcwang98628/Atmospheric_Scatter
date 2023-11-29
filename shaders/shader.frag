@@ -18,7 +18,7 @@ layout(binding = 0) uniform UniformBufferObject {
     int viewSamples;
     int lightSamples;
 
-    float I_sun;    // Intensity of the sun
+    vec3 I_sun;    // Intensity of the sun
     float R_e;      // Radius of the planet [m]
     float R_a;      // Radius of the atmosphere [m]
     vec3  beta_R;   // Rayleigh scattering coefficient
@@ -157,7 +157,7 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
         vec3 sigma_R = ubo.beta_R * h_R;
         float mieDensity = h_M;
         float sigma_mieS = ubo.beta_M  * mieDensity;
-        float sigma_mieT = (ubo.beta_M  + ubo.Absorb_M) * mieDensity;
+        float sigma_mieT = (ubo.beta_M  + ubo.absorb_M) * mieDensity;
         vec3 ozone = vec3(0.65e-3f, 1.881e-3f, 0.085e-3f) * max(0.0f, 1 - 0.5 * abs(height - 25) / 15);
 
         vec3 sigmaS = sigma_R + sigma_mieS;
@@ -176,7 +176,7 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
 
         // Next view sample
         tCurrent += segmentLen;
-        sumSigmaT += deltaSumSigmaT;
+        // sumSigmaT += deltaSumSigmaT;
     }
 
 //    return ubo.I_sun * (sum_R * ubo.beta_R * phase_R + sum_M * ubo.beta_M * phase_M);

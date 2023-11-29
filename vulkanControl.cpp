@@ -660,7 +660,7 @@ void VulkanControl::createIndexBuffer(std::vector<uint32_t> index) {
 void VulkanControl::createCamera(Camera* rawCamera) {
     rawCamera->worldUp = glm::vec3(0.0f, -1.0f, 0.0f);
     
-    rawCamera->pos = glm::vec3(0.0f, 6359.f, 30.f);
+    rawCamera->pos = glm::vec3(0.0f, 6360.f, 30.f);
     rawCamera->view = glm::vec3(0.0f, 0.0f, -1.0f);
     rawCamera->up = glm::vec3(0.0f, -1.0f, 0.0f);
     rawCamera->right = glm::cross(rawCamera->view, rawCamera->up);
@@ -822,12 +822,12 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     ubo.viewSamples = 16;
     ubo.lightSamples = 8;
 
-    ubo.I_sun = 20.f;
+    ubo.I_sun = glm::vec3(20.f, 20.f, 20.f);
     ubo.R_e = 6360.;
     ubo.R_a = 6420.;
     ubo.beta_R = glm::vec3(5.8e-3f, 13.5e-3f, 33.1e-3f);
     ubo.beta_M = 21e-3f;
-    // ubo.absorb_M = 4.4e-3f;
+    ubo.absorb_M = 4.4e-3f;
     ubo.H_R = 7.994f;
     ubo.H_M = 1.200f;
     ubo.g = 0.888f;

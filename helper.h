@@ -84,12 +84,12 @@ typedef struct UniformBufferObject {
     alignas(4) int viewSamples;
     alignas(4) int lightSamples;
 
-    alignas(4) float I_sun;    // Intensity of the sun
+    alignas(16) glm::vec3 I_sun;    // Intensity of the sun
     alignas(4) float R_e;      // Radius of the planet [m]
     alignas(4) float R_a;      // Radius of the atmosphere [m]
     alignas(16) glm::vec3  beta_R;   // Rayleigh scattering coefficient
     alignas(4) float beta_M;   // Mie scattering coefficient
-    // alignas(4) float absorb_M;
+    alignas(4) float absorb_M;
     alignas(4) float H_R;      // Rayleigh scale height
     alignas(4) float H_M;      // Mie scale height
     alignas(4) float g;        // Mie scattering direction - 
