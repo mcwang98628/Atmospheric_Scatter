@@ -123,7 +123,7 @@ private:
             glfwPollEvents();
             drawFrame();
             processInput();
-            UpdateSun(deltaTime);
+            //UpdateSun(deltaTime);
         }
 
         vkDeviceWaitIdle(vulkanController->device);
@@ -275,6 +275,10 @@ private:
             camera.moveVertical(cameraSpeed);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
             camera.moveVertical(-cameraSpeed);
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+            UpdateSun(0.00005f);
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+            UpdateSun(-.00005f);
     }
 
 };
