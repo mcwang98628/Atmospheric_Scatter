@@ -7,6 +7,7 @@
 #include <chrono>
 #include <array>
 
+#include "Atmosphere.h"
 #include "windowControl.h"
 #include "vulkanControl.h"
 
@@ -27,6 +28,13 @@ bool firstMouse = true;
 bool enableMouseCallback = true;
 float lastX =  WIDTH / 2.0;
 float lastY =  HEIGHT / 2.0;
+
+// Sun
+Sun sun ={};
+void UpdateSun(float delta);
+
+// Atmosphere
+Atmosphere atmosphere ={};
 
 // timing
 float deltaTime = 0.0f;
@@ -96,6 +104,7 @@ private:
         vulkanController->createTextureSampler();
         loadModel(MODEL_PATH);
         vulkanController->createCamera(&camera);
+        vulkanController->CreateSun(&sun);
         vulkanController->createVertexBuffer(vertices);
         vulkanController->createIndexBuffer(indices);
         vulkanController->createUniformBuffers();
@@ -114,6 +123,7 @@ private:
             glfwPollEvents();
             drawFrame();
             processInput();
+            UpdateSun(deltaTime);
         }
 
         vkDeviceWaitIdle(vulkanController->device);
@@ -268,7 +278,6 @@ private:
     }
 
 };
-
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
@@ -290,11 +299,19 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         camera.UpdateLookAt(xoffset, yoffset);
 }
 
+void UpdateSun(float delta)
+{
+    sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926 + glm::radians(20.f));
+    sun.sunDir.y = glm::sin(sun.sunAngle);
+    sun.sunDir.z = -glm::cos(sun.sunAngle);
+}
+
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    if (enableMouseCallback)
-        camera.UpdateFov(static_cast<float>(yoffset));
+    // if (enableMouseCallback)
+    //     UpdateSun(static_cast<float>(yoffset));
 }
+
 
 int main() {
     HelloTriangleApplication app;

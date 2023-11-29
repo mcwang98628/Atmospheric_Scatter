@@ -25,7 +25,7 @@ typedef struct Atmosphere
     glm::vec3 scatterRayleigh = glm::vec3(5.8e-3f, 13.5e-3f, 33.1e-3f);
     float scatterMie = 21e-3f;
     
-    float  hDensityRayleigh = 8;
+    float  hDensityRayleigh = 8.f;
     float hDensityMie  = 1.2f;
 
     float asymmetryMie = 0.8f;

@@ -18,8 +18,9 @@
 #include <GLFW/glfw3.h>
 
 #include "VulkanControl.h"
-#include "readFile.h";
+#include "readFile.h"
 #include "camera.h"
+#include "Atmosphere.h"
 
 VulkanControl::VulkanControl() {
 
@@ -667,8 +668,22 @@ void VulkanControl::createCamera(Camera* rawCamera) {
     rawCamera->fov = 45.f;
     rawCamera->near = 0.01;
     rawCamera->far = 2200.f;
+    rawCamera->yaw = -90.f;
+    rawCamera->pitch = 0.f;
 
     camera = rawCamera;
+}
+
+void VulkanControl::CreateSun(Sun* rawSun) {
+    rawSun->I_sun = glm::vec3(20.f);
+    rawSun->sunAngle = glm::radians(45.f);
+    rawSun->sunDir = glm::vec3(0.0f, 1.0f, 1.0f);
+    
+    sun = rawSun;
+}
+
+void VulkanControl::CreateAtmosphere(Atmosphere* rawAtmosphere) {
+    atmosphere = rawAtmosphere;
 }
 
 void VulkanControl::createUniformBuffers() {
@@ -801,7 +816,8 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     ubo.MVP = proj * lookat * m_modelAtmos;
 
     ubo.viewPos = camera->pos;
-    ubo.sunPos = glm::vec3(0, 1, 0);
+    
+    ubo.sunPos = sun->sunDir;
 
     ubo.viewSamples = 16;
     ubo.lightSamples = 8;
