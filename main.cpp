@@ -15,8 +15,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 // settings
 #define MOUSE_SENSITIVITY 0.1f
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t WIDTH = 2560;
+const uint32_t HEIGHT = 1440;
 
 const std::string MODEL_PATH = "models/sphere.obj";
 const std::string TEXTURE_PATH = "textures/viking_room.png";

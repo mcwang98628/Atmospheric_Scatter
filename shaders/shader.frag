@@ -3,8 +3,6 @@
 #define M_PI 3.1415926535897932384626433832795
 
 layout(location = 0) in vec3 fsPosition;     // Position of the fragment
-layout(location = 1) in vec3 fsNormal;
-layout(location = 2) in vec2 fsTexCoord;
 
 layout(location = 0) out vec4 finalColor;
 
@@ -25,6 +23,7 @@ layout(binding = 0) uniform UniformBufferObject {
     float R_a;      // Radius of the atmosphere [m]
     vec3  beta_R;   // Rayleigh scattering coefficient
     float beta_M;   // Mie scattering coefficient
+    float absorb_M;
     float H_R;      // Rayleigh scale height
     float H_M;      // Mie scale height
     float g;        // Mie scattering direction - 
@@ -91,6 +90,7 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
     // Rayleigh and Mie contribution
     vec3 sum_R = vec3(0);
     vec3 sum_M = vec3(0);
+    vec3 sumSigmaT = vec3(0);
 
     // Optical depth 
     float optDepth_R = 0.0;
@@ -108,6 +108,8 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
     float phase_M = 3.0 / (8.0 * M_PI) * 
                           ((1.0 - g_2) * (1.0 + mu_2)) / 
                           ((2.0 + g_2) * pow(1.0 + g_2 - 2.0 * ubo.g * mu, 1.5));
+    
+    
     // Sample along the view ray
     for (int i = 0; i < ubo.viewSamples; ++i)
     {
@@ -116,7 +118,7 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
 
         // Height of the sample above the planet
         float height = length(vSample) - ubo.R_e;
-
+        
         // Optical depth for Rayleigh and Mie scattering for current sample
         float h_R = exp(-height / ubo.H_R) * segmentLen;
         float h_M = exp(-height / ubo.H_M) * segmentLen;
@@ -152,18 +154,32 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
         }
         // TODO check sample above ground
 
+        vec3 sigma_R = ubo.beta_R * h_R;
+        float mieDensity = h_M;
+        float sigma_mieS = ubo.beta_M  * mieDensity;
+        float sigma_mieT = (ubo.beta_M  + ubo.Absorb_M) * mieDensity;
+        vec3 ozone = vec3(0.65e-3f, 1.881e-3f, 0.085e-3f) * max(0.0f, 1 - 0.5 * abs(height - 25) / 15);
+
+        vec3 sigmaS = sigma_R + sigma_mieS;
+        vec3 sigmaT = sigma_R + sigma_mieT + ozone;
+        
+        vec3 eyeTrans = exp(-sumSigmaT - 0.5 * sigmaT);
+
         // Attenuation of the light for both Rayleigh and Mie optical depth
         //  Mie extenction coeff. = 1.1 of the Mie scattering coeff.
         vec3 att = exp(-(ubo.beta_R * (optDepth_R + optDepthLight_R) +
         ubo.beta_M * 1.1f * (optDepth_M + optDepthLight_M)));
+        
         // Accumulate the scattering 
         sum_R += h_R * att;
         sum_M += h_M * att;
 
         // Next view sample
         tCurrent += segmentLen;
+        sumSigmaT += deltaSumSigmaT;
     }
 
+//    return ubo.I_sun * (sum_R * ubo.beta_R * phase_R + sum_M * ubo.beta_M * phase_M);
     return ubo.I_sun * (sum_R * ubo.beta_R * phase_R + sum_M * ubo.beta_M * phase_M);
 }
 
