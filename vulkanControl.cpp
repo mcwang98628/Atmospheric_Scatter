@@ -657,7 +657,7 @@ void VulkanControl::createIndexBuffer(std::vector<uint32_t> index) {
 }
 
 void VulkanControl::createCamera(Camera* rawCamera) {
-    rawCamera->worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    rawCamera->worldUp = glm::vec3(0.0f, -1.0f, 0.0f);
     
     rawCamera->pos = glm::vec3(0.0f, 6359.f, 30.f);
     rawCamera->view = glm::vec3(0.0f, 0.0f, -1.0f);
