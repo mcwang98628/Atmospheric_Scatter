@@ -1,4 +1,4 @@
-Atmospheric Scattering without ray marching
+Atmospheric Scattering without ray marching \n
 Reference: http://nishitalab.org/user/nis/cdrom/sig93_nis.pdf
 
 
