@@ -279,21 +279,42 @@ void VulkanControl::createRenderPass() {
 }
 
 void VulkanControl::createDescriptorSetLayout() {
+    VkDescriptorSetLayoutBinding cameraBinding{};
+    cameraBinding.binding            = 0;
+    cameraBinding.descriptorCount    = 1;
+    cameraBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    cameraBinding.pImmutableSamplers = nullptr;
+    cameraBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutBinding atmosphereBinding{};
+    atmosphereBinding.binding            = 1;
+    atmosphereBinding.descriptorCount    = 1;
+    atmosphereBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    atmosphereBinding.pImmutableSamplers = nullptr;
+    atmosphereBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutBinding sunBinding{};
+    sunBinding.binding            = 2;
+    sunBinding.descriptorCount    = 1;
+    sunBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    sunBinding.pImmutableSamplers = nullptr;
+    sunBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.binding = 3;
     samplerLayoutBinding.descriptorCount = 1;
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+    std::array<VkDescriptorSetLayoutBinding, 4> bindings = {
+        cameraBinding,
+        atmosphereBinding,
+        sunBinding,
+        samplerLayoutBinding
+        };
+
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -304,7 +325,18 @@ void VulkanControl::createDescriptorSetLayout() {
     }
 }
 
-void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath) {
+void VulkanControl::createPipelineLayout() {
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create pipeline layout!");
+    }
+}
+
+void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath, VkPipeline& TargetPipeline) {
     auto vertShaderCode = FileReader::readFile(vertShaderPath);
     auto fragShaderCode = FileReader::readFile(fragShaderPath);
 
@@ -333,6 +365,7 @@ void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::stri
 
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
@@ -393,15 +426,6 @@ void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::stri
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicState.pDynamicStates = dynamicStates.data();
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create pipeline layout!");
-    }
-
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
@@ -419,7 +443,7 @@ void VulkanControl::createGraphicsPipeline(std::string vertShaderPath, std::stri
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &TargetPipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
 
@@ -604,7 +628,7 @@ void VulkanControl::createTextureSampler() {
 }
 
 
-void VulkanControl::createVertexBuffer(std::vector<Vertex> verts) {
+void VulkanControl::createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
     VkDeviceSize bufferSize = sizeof(verts[0]) * verts.size();
 
     VkBuffer stagingBuffer;
@@ -616,9 +640,9 @@ void VulkanControl::createVertexBuffer(std::vector<Vertex> verts) {
     memcpy(data, verts.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
 
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
 
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -634,7 +658,7 @@ void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
     endSingleTimeCommands(commandBuffer);
 }
 
-void VulkanControl::createIndexBuffer(std::vector<uint32_t> index) {
+void VulkanControl::createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
     if (index.empty()) {
         return;
     }
@@ -649,26 +673,29 @@ void VulkanControl::createIndexBuffer(std::vector<uint32_t> index) {
     memcpy(data, index.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
 
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
 
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
 void VulkanControl::createCamera(Camera* rawCamera) {
-    rawCamera->worldUp = glm::vec3(0.0f, -1.0f, 0.0f);
-    
-    rawCamera->pos = glm::vec3(0.0f, 6360.f, 30.f);
-    rawCamera->view = glm::vec3(0.0f, 0.0f, -1.0f);
-    rawCamera->up = glm::vec3(0.0f, -1.0f, 0.0f);
+    rawCamera->pos = glm::vec3(0.0f, 1.f, 0.f);  // Position camera on surface of green planet (radius 50 + 2 units above)
+    // rawCamera->pos = glm::vec3(0.0f, 6360.f, 30.f);
+
+    // Try looking UPWARD instead (in case Vulkan coordinates are flipped)
+    rawCamera->view = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));  // Look forward and UP
+    rawCamera->up = glm::vec3(0.0f, 1.0f, 0.0f);
+    rawCamera->worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
     rawCamera->right = glm::cross(rawCamera->view, rawCamera->up);
     rawCamera->speed = 0;
     rawCamera->fov = 45.f;
     rawCamera->near = 0.01;
     rawCamera->far = 2200.f;
-    rawCamera->yaw = -90.f;
+    rawCamera->yaw = 0.f;
     rawCamera->pitch = 0.f;
 
     camera = rawCamera;
@@ -676,8 +703,8 @@ void VulkanControl::createCamera(Camera* rawCamera) {
 
 void VulkanControl::CreateSun(Sun* rawSun) {
     rawSun->I_sun = glm::vec3(20.f);
-    rawSun->sunAngle = glm::radians(45.f);
-    rawSun->sunDir = glm::vec3(0.0f, 1.0f, 1.0f);
+    rawSun->sunAngle = glm::radians(.3f);
+    rawSun->sunDir = glm::vec3(0.0f, 5.0f, 100.0f);
     
     sun = rawSun;
 }
@@ -687,23 +714,53 @@ void VulkanControl::CreateAtmosphere(Atmosphere* rawAtmosphere) {
 }
 
 void VulkanControl::createUniformBuffers() {
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    VkDeviceSize cameraSize     = sizeof(CameraBuffer);
+    VkDeviceSize atmosphereSize = sizeof(AtmosphereBuffer);
+    VkDeviceSize sunSize        = sizeof(SunBuffer);
 
-    uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+    cameraBuffer.resize(MAX_FRAMES_IN_FLIGHT);
+    cameraBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    cameraBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+    atmosphereBuffer.resize(MAX_FRAMES_IN_FLIGHT);
+    atmosphereBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    atmosphereBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+    sunBuffer.resize(MAX_FRAMES_IN_FLIGHT);
+    sunBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    sunBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+    
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+        createBuffer(cameraSize,
+                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     cameraBuffer[i],
+                     cameraBufferMemory[i]);
+        vkMapMemory(device, cameraBufferMemory[i], 0, cameraSize, 0, &cameraBufferMapped[i]);     
 
-        vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+        createBuffer(sunSize,
+                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     sunBuffer[i],
+                     sunBufferMemory[i]);
+        vkMapMemory(device, sunBufferMemory[i], 0, sunSize, 0, &sunBufferMapped[i]);
+
+        createBuffer(atmosphereSize,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    atmosphereBuffer[i],
+                    atmosphereBufferMemory[i]);
+        vkMapMemory(device, atmosphereBufferMemory[i], 0, atmosphereSize, 0, &atmosphereBufferMapped[i]);
+        memcpy(atmosphereBufferMapped[i], &atmosphereData, sizeof(atmosphereData));
     }
 }
 
 void VulkanControl::createDescriptorPool() {
     std::array<VkDescriptorPoolSize, 2> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * 3);
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
@@ -732,33 +789,56 @@ void VulkanControl::createDescriptorSets() {
     }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = uniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
+        VkDescriptorBufferInfo camInfo{};
+        camInfo.buffer = cameraBuffer[i];
+        camInfo.offset = 0;
+        camInfo.range = sizeof(CameraBuffer);
+
+        VkDescriptorBufferInfo atmInfo{};
+        atmInfo.buffer = atmosphereBuffer[i];
+        atmInfo.offset = 0;
+        atmInfo.range = sizeof(AtmosphereBuffer);
+
+        VkDescriptorBufferInfo sunInfo{};
+        sunInfo.buffer = sunBuffer[i];
+        sunInfo.offset = 0;
+        sunInfo.range = sizeof(SunBuffer);
 
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.imageView = textureImageView;
         imageInfo.sampler = textureSampler;
 
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
         descriptorWrites[0].dstBinding = 0;
-        descriptorWrites[0].dstArrayElement = 0;
         descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[0].descriptorCount = 1;
-        descriptorWrites[0].pBufferInfo = &bufferInfo;
+        descriptorWrites[0].pBufferInfo = &camInfo;
 
         descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[1].dstSet = descriptorSets[i];
         descriptorWrites[1].dstBinding = 1;
-        descriptorWrites[1].dstArrayElement = 0;
-        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pImageInfo = &imageInfo;
+        descriptorWrites[1].pBufferInfo = &atmInfo;
+
+        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[2].dstSet = descriptorSets[i];
+        descriptorWrites[2].dstBinding = 2;
+        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[2].descriptorCount = 1;
+        descriptorWrites[2].pBufferInfo = &sunInfo;
+
+        descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[3].dstSet = descriptorSets[i];
+        descriptorWrites[3].dstBinding = 3;
+        descriptorWrites[3].dstArrayElement = 0;
+        descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[3].descriptorCount = 1;
+        descriptorWrites[3].pImageInfo = &imageInfo;
 
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -800,51 +880,66 @@ void VulkanControl::createSyncObjects() {
 }
 
 void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
-    static auto startTime = std::chrono::high_resolution_clock::now();
+    // static auto startTime = std::chrono::high_resolution_clock::now();
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+    // auto currentTime = std::chrono::high_resolution_clock::now();
+    // float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    UniformBufferObject ubo{};
-    glm::mat4 m_modelAtmos = glm::scale(glm::mat4(1.0f), glm::vec3(6420., 6420., 6420.));
-    glm::mat4 m_modelEarth = glm::scale(glm::mat4(1.0f), glm::vec3(6360., 6360., 6360.));
+    // glm::mat4 m_modelAtmos = glm::scale(glm::mat4(1.0f), glm::vec3(6420., 6420., 6420.));
+    // glm::mat4 m_modelEarth = glm::scale(glm::mat4(1.0f), glm::vec3(6360., 6360., 6360.));
 
-    ubo.M = m_modelAtmos;
+    cameraData.transform = glm::mat4(1.0f);
+    cameraData.view = glm::lookAt(camera->pos, camera->view + camera->pos, camera->up);
+    cameraData.projection = glm::perspective(camera->fov, swapChainExtent.width / (float)swapChainExtent.height, camera->near, camera->far);
+    cameraData.projection[1][1] *= -1;  // Flip Y axis for Vulkan coordinate system
+    
+    memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
+
+    // ubo.M = m_modelAtmos;
     glm::mat4 lookat = glm::lookAt(camera->pos, camera->view + camera->pos, camera->up);
     glm::mat4 proj = glm::perspective(camera->fov, swapChainExtent.width / (float)swapChainExtent.height, camera->near, camera->far);
 
-    ubo.MVP = proj * lookat * m_modelAtmos;
+    // ubo.MVP = proj * lookat * m_modelAtmos;
 
-    ubo.viewPos = camera->pos;
+    // ubo.viewPos = camera->pos;
     
-    ubo.sunPos = sun->sunDir;
+    sunData.sunPos = sun->sunDir;
+    memcpy(sunBufferMapped[currentImage], &sunData, sizeof(sunData));
 
-    ubo.viewSamples = 16;
-    ubo.lightSamples = 8;
+    // ubo.viewSamples = 16;
+    // ubo.lightSamples = 8;
 
-    ubo.I_sun = glm::vec3(20.f, 20.f, 20.f);
-    ubo.R_e = 6360.;
-    ubo.R_a = 6420.;
-    ubo.beta_R = glm::vec3(5.8e-3f, 13.5e-3f, 33.1e-3f);
-    ubo.beta_M = 21e-3f;
-    ubo.absorb_M = 4.4e-3f;
-    ubo.H_R = 7.994f;
-    ubo.H_M = 1.200f;
-    ubo.g = 0.888f;
+    // ubo.I_sun = glm::vec3(20.f, 20.f, 20.f);
+    // ubo.H_R = 7.994f;
+    // ubo.H_M = 1.200f;
+    // ubo.g = 0.888f;
 
-    ubo.toneMappingFactor = 1.0;
 
-    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
-void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, std::vector<uint32_t> index) {
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame,VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> index)
+{
+    // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapChainExtent.width;
+    viewport.height = (float)swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapChainExtent;
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
+    executeDrawCommand(commandBuffer, pipeline, vBuffer, iBuffer, index);
+}
+
+void VulkanControl::beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+{
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderPass;
@@ -860,42 +955,11 @@ void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)swapChainExtent.width;
-    viewport.height = (float)swapChainExtent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-    VkRect2D scissor{};
-    scissor.offset = { 0, 0 };
-    scissor.extent = swapChainExtent;
-    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-    VkBuffer vertexBuffers[] = { vertexBuffer };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-    if (indexBuffer != NULL) {
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    }
-
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-
-    if (!index.empty()) {
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(index.size()), 1, 0, 0, 0);
-    }
-
+void VulkanControl::endRenderPass(VkCommandBuffer commandBuffer)
+{
     vkCmdEndRenderPass(commandBuffer);
-
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-        throw std::runtime_error("failed to record command buffer!");
-    }
 }
 
 void VulkanControl::recreateSwapChain(GLFWwindow* window) {
@@ -917,13 +981,21 @@ void VulkanControl::recreateSwapChain(GLFWwindow* window) {
 void VulkanControl::cleanUp() {
     cleanupSwapChain();
 
-    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    vkDestroyPipeline(device, graphicsPipeline1, nullptr);
+    vkDestroyPipeline(device, graphicsPipeline2, nullptr);
+
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-        vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+        vkDestroyBuffer(device, cameraBuffer[i], nullptr);
+        vkFreeMemory(device, cameraBufferMemory[i], nullptr);
+
+        vkDestroyBuffer(device, atmosphereBuffer[i], nullptr);
+        vkFreeMemory(device, atmosphereBufferMemory[i], nullptr);
+
+        vkDestroyBuffer(device, sunBuffer[i], nullptr);
+        vkFreeMemory(device, sunBufferMemory[i], nullptr);
     }
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
@@ -936,11 +1008,16 @@ void VulkanControl::cleanUp() {
 
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(device, indexBuffer, nullptr);
-    vkFreeMemory(device, indexBufferMemory, nullptr);
+    vkDestroyBuffer(device, indexBuffer1, nullptr);
+    vkDestroyBuffer(device, indexBuffer2, nullptr);
+    vkFreeMemory(device, indexBufferMemory1, nullptr);
+    vkFreeMemory(device, indexBufferMemory2, nullptr);
 
-    vkDestroyBuffer(device, vertexBuffer, nullptr);
-    vkFreeMemory(device, vertexBufferMemory, nullptr);
+    vkDestroyBuffer(device, vertexBuffer1, nullptr);
+    vkDestroyBuffer(device, vertexBuffer2, nullptr);
+    vkFreeMemory(device, vertexBufferMemory1, nullptr);
+    vkFreeMemory(device, vertexBufferMemory2, nullptr);
+
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -1039,6 +1116,27 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanControl::debugCallback(VkDebugUtilsMessageS
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
+}
+
+void VulkanControl::executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> indices)
+{
+    VkBuffer vertexBuffers[] = { vBuffer };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+    if (iBuffer != NULL) {
+        vkCmdBindIndexBuffer(commandBuffer, iBuffer, 0, VK_INDEX_TYPE_UINT32);
+    }
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+    if (!indices.empty()) {
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+    }
+
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vBuffer, offsets);
+    vkCmdBindIndexBuffer(commandBuffer, iBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[0], 0, nullptr);
+    vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 }
 
 void VulkanControl::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {

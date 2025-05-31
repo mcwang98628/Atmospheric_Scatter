@@ -19,7 +19,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 const uint32_t WIDTH = 2560;
 const uint32_t HEIGHT = 1440;
 
-const std::string MODEL_PATH = "models/sphere.obj";
+const std::string TERRAIN_PATH = "models/Plane.obj";
+const std::string SKY_PATH = "models/sphere.obj";
+
 const std::string TEXTURE_PATH = "textures/viking_room.png";
 
 // Camera
@@ -43,7 +45,7 @@ float lastFrame = 0.0f;
 namespace std {
     template<> struct hash<Vertex> {
         size_t operator()(Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+            return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.normal) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
         }
     };
 }
@@ -62,8 +64,11 @@ private:
     WindowControl* windowController = nullptr;
     VulkanControl* vulkanController = nullptr;
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    std::vector<Vertex> vertices1;
+    std::vector<uint32_t> indices1;
+    
+    std::vector<Vertex> vertices2;
+    std::vector<uint32_t> indices2;
 
     uint32_t currentFrame = 0;
 
@@ -95,18 +100,27 @@ private:
         vulkanController->createImageViews();
         vulkanController->createRenderPass();
         vulkanController->createDescriptorSetLayout();
-        vulkanController->createGraphicsPipeline("shaders/vert.spv", "shaders/frag.spv");
+        vulkanController->createPipelineLayout();
+        vulkanController->createGraphicsPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv", vulkanController->graphicsPipeline1);
+        vulkanController->createGraphicsPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv", vulkanController->graphicsPipeline2);
         vulkanController->createCommandPool();
         vulkanController->createDepthResources();
         vulkanController->createFramebuffers();
         vulkanController->createTextureImage(TEXTURE_PATH);
         vulkanController->createTextureImageView();
         vulkanController->createTextureSampler();
-        loadModel(MODEL_PATH);
+        loadModel(TERRAIN_PATH, vertices1, indices1);
+        loadModel(SKY_PATH, vertices2, indices2);
+
         vulkanController->createCamera(&camera);
         vulkanController->CreateSun(&sun);
-        vulkanController->createVertexBuffer(vertices);
-        vulkanController->createIndexBuffer(indices);
+        vulkanController->createVertexBuffer(vertices1, vulkanController->vertexBuffer1, vulkanController->vertexBufferMemory1);
+        vulkanController->createIndexBuffer(indices1, vulkanController->indexBuffer1, vulkanController->indexBufferMemory1);
+
+        vulkanController->createVertexBuffer(vertices2, vulkanController->vertexBuffer2, vulkanController->vertexBufferMemory2);
+
+        vulkanController->createIndexBuffer(indices2, vulkanController->indexBuffer2, vulkanController->indexBufferMemory2);
+
         vulkanController->createUniformBuffers();
         vulkanController->createDescriptorPool();
         vulkanController->createDescriptorSets();
@@ -142,7 +156,7 @@ private:
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
-    void loadModel(std::string modelPath) {
+    void loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices) {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;
@@ -169,16 +183,17 @@ private:
                     1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
                 };
 
-                vertex.color = {1.0f, 1.0f, 1.0f};
+                vertex.normal = {1.0f, 1.0f, 1.0f};
 
                 if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
+                    uniqueVertices[vertex] = static_cast<uint32_t>(destVer.size());
+                    destVer.push_back(vertex);
                 }
 
-                indices.push_back(uniqueVertices[vertex]);
+                destIndices.push_back(uniqueVertices[vertex]);
             }
         }
+        std::cout << destVer.size() ;
     }
 
     void drawFrame() {
@@ -199,8 +214,20 @@ private:
         vkResetFences(vulkanController->device, 1, &vulkanController->inFlightFences[currentFrame]);
 
         vkResetCommandBuffer(vulkanController->commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
-        vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, indices);
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
+        if (vkBeginCommandBuffer(vulkanController->commandBuffers[currentFrame], &beginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to begin recording command buffer!");
+        }
+        vulkanController->beginRenderPass(vulkanController->commandBuffers[currentFrame], imageIndex);
+        vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame,vulkanController->graphicsPipeline2, vulkanController->vertexBuffer2, vulkanController->indexBuffer2,  indices2);  // Draw blue sky first (background)
+        vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline1, vulkanController->vertexBuffer1, vulkanController->indexBuffer1, indices1);  // Draw green ground second (foreground)
+        vulkanController->endRenderPass(vulkanController->commandBuffers[currentFrame]);
+        if (vkEndCommandBuffer(vulkanController->commandBuffers[currentFrame]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record command buffer!");
+        }
+        
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -262,7 +289,7 @@ private:
             }
         }
 
-        float cameraSpeed = static_cast<float>(2.5 * deltaTime);
+        float cameraSpeed = static_cast<float>(25 * deltaTime);
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             camera.moveForward(cameraSpeed);
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -276,9 +303,9 @@ private:
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
             camera.moveVertical(-cameraSpeed);
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-            UpdateSun(0.00005f);
+            UpdateSun(0.01f);
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-            UpdateSun(-.00005f);
+            UpdateSun(-.01f);
     }
 
 };
@@ -305,7 +332,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 void UpdateSun(float delta)
 {
-    sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926 + glm::radians(20.f));
+    sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926);
     sun.sunDir.y = glm::sin(sun.sunAngle);
     sun.sunDir.z = -glm::cos(sun.sunAngle);
 }

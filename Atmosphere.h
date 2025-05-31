@@ -20,7 +20,6 @@ typedef struct Atmosphere
     // alignas(4) float g;        // Mie scattering direction - 
     //  - anisotropy of the medium
     
-    alignas(4) float toneMappingFactor;    ///< Whether tone mapping is applied
     
     glm::vec3 scatterRayleigh = glm::vec3(5.8e-3f, 13.5e-3f, 33.1e-3f);
     float scatterMie = 21e-3f;

@@ -29,7 +29,9 @@ public:
     VkDescriptorSetLayout descriptorSetLayout;
 
     VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline;
+    VkPipeline graphicsPipeline1;
+    VkPipeline graphicsPipeline2;
+
 
     VkCommandPool commandPool;
 
@@ -43,14 +45,26 @@ public:
 
     VkSampler textureSampler;
 
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
+    VkDeviceMemory vertexBufferMemory1;
+    VkDeviceMemory vertexBufferMemory2;
 
-    std::vector<VkBuffer> uniformBuffers;
-    std::vector<VkDeviceMemory> uniformBuffersMemory;
-    std::vector<void*> uniformBuffersMapped;
+    VkDeviceMemory indexBufferMemory1;
+    VkDeviceMemory indexBufferMemory2;
+
+    VkBuffer vertexBuffer1, indexBuffer1;
+    VkBuffer vertexBuffer2, indexBuffer2;
+
+    std::vector<VkBuffer>        cameraBuffer;
+    std::vector<VkDeviceMemory>  cameraBufferMemory;
+    std::vector<void*>           cameraBufferMapped;
+
+    std::vector<VkBuffer>        atmosphereBuffer;
+    std::vector<VkDeviceMemory>  atmosphereBufferMemory;
+    std::vector<void*>           atmosphereBufferMapped;
+
+    std::vector<VkBuffer> sunBuffer;
+    std::vector<VkDeviceMemory> sunBufferMemory;
+    std::vector<void*> sunBufferMapped;
 
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
@@ -65,6 +79,10 @@ public:
     Sun* sun;
     Atmosphere* atmosphere;
 
+    SunBuffer sunData;
+    AtmosphereBuffer atmosphereData;
+    CameraBuffer cameraData;
+
     VulkanControl();
     void createInstance();
     void setupDebugMessenger();
@@ -77,7 +95,8 @@ public:
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createRenderPass();
     void createDescriptorSetLayout();
-    void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath);
+    void createPipelineLayout();
+    void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath, VkPipeline& targetPipeline);
     void createCommandPool();
     void createDepthResources();
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
@@ -85,15 +104,17 @@ public:
     void createTextureImage(std::string texturePath);
     void createTextureImageView();
     void createTextureSampler();
-    void createVertexBuffer(std::vector<Vertex> verts);
-    void createIndexBuffer(std::vector<uint32_t> index);
+    void createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
+    void createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
     void createCommandBuffers();
     void createSyncObjects();
     void updateUniformBuffer(uint32_t currentImage);
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, std::vector<uint32_t> index);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> index);
+    void beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void endRenderPass(VkCommandBuffer commandBuffer);
     void recreateSwapChain(GLFWwindow* window);
     void createCamera(Camera* rawCamera);
     void CreateSun(Sun* Sun);
@@ -128,4 +149,5 @@ private:
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+    void executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> indices);
 };

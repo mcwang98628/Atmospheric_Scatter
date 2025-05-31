@@ -28,6 +28,7 @@ void Camera::UpdateLookAt(float xoffset, float yoffset)
 		pitch = -89.0f;
 
 	updateCameraVectors();
+	std::cout << "yaw: " << yaw << " pitch: " << pitch << std::endl;
 }
 
 void Camera::UpdateFov(float yoffset)

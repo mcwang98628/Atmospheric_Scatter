@@ -35,7 +35,7 @@ typedef struct SwapChainSupportDetails{
 
 typedef struct Vertex {
     glm::vec3 pos;
-    glm::vec3 color;
+    glm::vec3 normal;
     glm::vec2 texCoord;
 
     static VkVertexInputBindingDescription getBindingDescription() {
@@ -58,7 +58,7 @@ typedef struct Vertex {
         attributeDescriptions[1].binding = 0;
         attributeDescriptions[1].location = 1;
         attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(Vertex, color);
+        attributeDescriptions[1].offset = offsetof(Vertex, normal);
 
         attributeDescriptions[2].binding = 0;
         attributeDescriptions[2].location = 2;
@@ -69,31 +69,31 @@ typedef struct Vertex {
     }
 
     bool operator==(const Vertex& other) const {
-        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+        return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
     }
 } Vertex;
 
-typedef struct UniformBufferObject {
-    alignas(16) glm::mat4 M;
-    alignas(16) glm::mat4 MVP;
+typedef struct CameraBuffer {
+    alignas(16) glm::mat4 transform;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 projection;
+} CameraBuffer;
 
-    alignas(16) glm::vec3 viewPos;   // Position of the viewer
+typedef struct AtmosphereBuffer {
+    alignas(4) int viewSamples = 16;
+    alignas(4) int lightSamples = 8;
+    alignas(16) glm::vec3 sunIntensity = glm::vec3(20.f, 20.f, 20.f);    // Intensity of the sun
+
+    alignas(16) glm::vec3 scatterRayleigh = glm::vec3(5.802f, 13.558f, 33.1f);
+    alignas(4) float scatterMie = 3.996f;
+    alignas(4) float absorbMie = 4.4f;
+    alignas(4) float planetRadius = 6360;
+    alignas(4) float atmosphereRadius = 6460;
+    alignas(4) float rayleighScaleHeight = 7.994f;
+    alignas(4) float mieScaleHeight = 1.2f;
+    alignas(4) float anisotropy = 0.888f;  //  - anisotropy of the medium
+} AtmosphereBuffer;
+
+typedef struct SunBuffer {
     alignas(16) glm::vec3  sunPos;    // Position of the sun, light direction
-
-    // Number of samples along the view ray and light ray
-    alignas(4) int viewSamples;
-    alignas(4) int lightSamples;
-
-    alignas(16) glm::vec3 I_sun;    // Intensity of the sun
-    alignas(4) float R_e;      // Radius of the planet [m]
-    alignas(4) float R_a;      // Radius of the atmosphere [m]
-    alignas(16) glm::vec3  beta_R;   // Rayleigh scattering coefficient
-    alignas(4) float beta_M;   // Mie scattering coefficient
-    alignas(4) float absorb_M;
-    alignas(4) float H_R;      // Rayleigh scale height
-    alignas(4) float H_M;      // Mie scale height
-    alignas(4) float g;        // Mie scattering direction - 
-    //  - anisotropy of the medium
-
-    alignas(4) float toneMappingFactor;    ///< Whether tone mapping is applied
-} UniformBufferObject;
+} SunBuffer;
