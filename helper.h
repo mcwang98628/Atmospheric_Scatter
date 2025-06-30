@@ -1,7 +1,5 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <glm/gtx/hash.hpp>
-#include <optional>
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -72,12 +70,6 @@ typedef struct Vertex {
         return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
     }
 } Vertex;
-
-typedef struct CameraBuffer {
-    alignas(16) glm::mat4 transform;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 projection;
-} CameraBuffer;
 
 typedef struct AtmosphereBuffer {
     alignas(4) int viewSamples = 16;

@@ -21,14 +21,56 @@
 #include "readFile.h"
 #include "camera.h"
 #include "Atmosphere.h"
+#include "helper.h"
+
+uint32_t VulkanControl::currentFrame = 0;  // Initialize static variable
 
 VulkanControl::VulkanControl() {
-
+    
 }
 
 VulkanControl::~VulkanControl() {
 
 }
+
+void VulkanControl::Init(GLFWwindow* window, float width, float height) {
+    createInstance();
+    setupDebugMessenger();
+    createSurface(window);
+    pickPhysicalDevice();
+    createLogicalDevice();
+    createSwapChain();
+    createImageViews();
+    createRenderPass();
+    createDescriptorSetLayout();
+    createPipelineLayout();
+    // createGraphicsPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv", graphicsPipeline1);
+    // createGraphicsPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv", graphicsPipeline2);
+    createCommandPool();
+    createDepthResources();
+    createFramebuffers();
+    // createTextureImage(TEXTURE_PATH);
+    // createTextureImageView();
+    // createTextureSampler();
+    // loadModel(TERRAIN_PATH, vertices1, indices1);
+    loadModel(SKY_PATH, vertices2, indices2);
+
+    createCamera(&camera);
+    CreateSun(&sun);
+    //createVertexBuffer(vertices1, vertexBuffer1, vertexBufferMemory1);
+    //createIndexBuffer(indices1, indexBuffer1, indexBufferMemory1);
+
+    //createVertexBuffer(vertices2, vertexBuffer2, vertexBufferMemory2);
+
+    //createIndexBuffer(indices2, indexBuffer2, indexBufferMemory2);
+
+    createUniformBuffers();
+    createDescriptorPool();
+    createDescriptorSets();
+    createCommandBuffers();
+    createSyncObjects();
+}
+
 
 void VulkanControl::createInstance() {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
@@ -299,20 +341,11 @@ void VulkanControl::createDescriptorSetLayout() {
     sunBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     sunBinding.pImmutableSamplers = nullptr;
     sunBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
 
-    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 3;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    std::array<VkDescriptorSetLayoutBinding, 4> bindings = {
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {
         cameraBinding,
         atmosphereBinding,
-        sunBinding,
-        samplerLayoutBinding
+        sunBinding
         };
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
@@ -543,6 +576,7 @@ void VulkanControl::createFramebuffers() {
     }
 }
 
+/*
 void VulkanControl::createTextureImage(std::string texturePath) {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -572,6 +606,7 @@ void VulkanControl::createTextureImage(std::string texturePath) {
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
+*/
 
 void VulkanControl::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
     VkBufferCreateInfo bufferInfo{};
@@ -599,54 +634,56 @@ void VulkanControl::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, Vk
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
+/*
 void VulkanControl::createTextureImageView() {
     textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
+*/
 
-void VulkanControl::createTextureSampler() {
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+//void VulkanControl::createTextureSampler() {
+//    VkPhysicalDeviceProperties properties{};
+//    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+//
+//    VkSamplerCreateInfo samplerInfo{};
+//    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+//    samplerInfo.magFilter = VK_FILTER_LINEAR;
+//    samplerInfo.minFilter = VK_FILTER_LINEAR;
+//    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+//    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+//    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+//    samplerInfo.anisotropyEnable = VK_TRUE;
+//    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+//    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+//    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+//    samplerInfo.compareEnable = VK_FALSE;
+//    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+//    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+//
+//    if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+//        throw std::runtime_error("failed to create texture sampler!");
+//    }
+//}
 
-    VkSamplerCreateInfo samplerInfo{};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.anisotropyEnable = VK_TRUE;
-    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    samplerInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
-    if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create texture sampler!");
-    }
-}
-
-
-void VulkanControl::createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
-    VkDeviceSize bufferSize = sizeof(verts[0]) * verts.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, verts.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
-
-    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
-
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
-}
+//void VulkanControl::createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
+//    VkDeviceSize bufferSize = sizeof(verts[0]) * verts.size();
+//
+//    VkBuffer stagingBuffer;
+//    VkDeviceMemory stagingBufferMemory;
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+//
+//    void* data;
+//    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+//    memcpy(data, verts.data(), (size_t)bufferSize);
+//    vkUnmapMemory(device, stagingBufferMemory);
+//
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
+//
+//    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
+//
+//    vkDestroyBuffer(device, stagingBuffer, nullptr);
+//    vkFreeMemory(device, stagingBufferMemory, nullptr);
+//}
 
 void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -658,60 +695,60 @@ void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
     endSingleTimeCommands(commandBuffer);
 }
 
-void VulkanControl::createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
-    if (index.empty()) {
-        return;
-    }
-    VkDeviceSize bufferSize = sizeof(index[0]) * index.size();
+//void VulkanControl::createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
+//    if (index.empty()) {
+//        return;
+//    }
+//    VkDeviceSize bufferSize = sizeof(index[0]) * index.size();
+//
+//    VkBuffer stagingBuffer;
+//    VkDeviceMemory stagingBufferMemory;
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+//
+//    void* data;
+//    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+//    memcpy(data, index.data(), (size_t)bufferSize);
+//    vkUnmapMemory(device, stagingBufferMemory);
+//
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
+//
+//    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
+//
+//    vkDestroyBuffer(device, stagingBuffer, nullptr);
+//    vkFreeMemory(device, stagingBufferMemory, nullptr);
+//}
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+//void VulkanControl::createCamera(Camera* rawCamera) {
+//    rawCamera->pos = glm::vec3(0.0f, 1.f, 0.f);  // Position camera on surface of green planet (radius 50 + 2 units above)
+//    // rawCamera->pos = glm::vec3(0.0f, 6360.f, 30.f);
+//
+//    // Try looking UPWARD instead (in case Vulkan coordinates are flipped)
+//    rawCamera->view = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));  // Look forward and UP
+//    rawCamera->up = glm::vec3(0.0f, 1.0f, 0.0f);
+//    rawCamera->worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+//
+//    rawCamera->right = glm::cross(rawCamera->view, rawCamera->up);
+//    rawCamera->speed = 0;
+//    rawCamera->fov = 45.f;
+//    rawCamera->near = 0.01;
+//    rawCamera->far = 2200.f;
+//    rawCamera->yaw = 0.f;
+//    rawCamera->pitch = 0.f;
+//
+//    camera = rawCamera;
+//}
 
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, index.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
+//void VulkanControl::CreateSun(Sun* rawSun) {
+//    rawSun->I_sun = glm::vec3(20.f);
+//    rawSun->sunAngle = glm::radians(.3f);
+//    rawSun->sunDir = glm::vec3(0.0f, 5.0f, 100.0f);
+//    
+//    sun = rawSun;
+//}
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
-
-    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
-
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
-}
-
-void VulkanControl::createCamera(Camera* rawCamera) {
-    rawCamera->pos = glm::vec3(0.0f, 1.f, 0.f);  // Position camera on surface of green planet (radius 50 + 2 units above)
-    // rawCamera->pos = glm::vec3(0.0f, 6360.f, 30.f);
-
-    // Try looking UPWARD instead (in case Vulkan coordinates are flipped)
-    rawCamera->view = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));  // Look forward and UP
-    rawCamera->up = glm::vec3(0.0f, 1.0f, 0.0f);
-    rawCamera->worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    rawCamera->right = glm::cross(rawCamera->view, rawCamera->up);
-    rawCamera->speed = 0;
-    rawCamera->fov = 45.f;
-    rawCamera->near = 0.01;
-    rawCamera->far = 2200.f;
-    rawCamera->yaw = 0.f;
-    rawCamera->pitch = 0.f;
-
-    camera = rawCamera;
-}
-
-void VulkanControl::CreateSun(Sun* rawSun) {
-    rawSun->I_sun = glm::vec3(20.f);
-    rawSun->sunAngle = glm::radians(.3f);
-    rawSun->sunDir = glm::vec3(0.0f, 5.0f, 100.0f);
-    
-    sun = rawSun;
-}
-
-void VulkanControl::CreateAtmosphere(Atmosphere* rawAtmosphere) {
-    atmosphere = rawAtmosphere;
-}
+//void VulkanControl::CreateAtmosphere(Atmosphere* rawAtmosphere) {
+//    atmosphere = rawAtmosphere;
+//}
 
 void VulkanControl::createUniformBuffers() {
     VkDeviceSize cameraSize     = sizeof(CameraBuffer);
@@ -758,11 +795,9 @@ void VulkanControl::createUniformBuffers() {
 }
 
 void VulkanControl::createDescriptorPool() {
-    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+    std::array<VkDescriptorPoolSize, 1> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * 3);
-    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -804,12 +839,7 @@ void VulkanControl::createDescriptorSets() {
         sunInfo.offset = 0;
         sunInfo.range = sizeof(SunBuffer);
 
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = textureImageView;
-        imageInfo.sampler = textureSampler;
-
-        std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
+        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
@@ -831,14 +861,6 @@ void VulkanControl::createDescriptorSets() {
         descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[2].descriptorCount = 1;
         descriptorWrites[2].pBufferInfo = &sunInfo;
-
-        descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[3].dstSet = descriptorSets[i];
-        descriptorWrites[3].dstBinding = 3;
-        descriptorWrites[3].dstArrayElement = 0;
-        descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrites[3].descriptorCount = 1;
-        descriptorWrites[3].pImageInfo = &imageInfo;
 
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -888,16 +910,13 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     // glm::mat4 m_modelAtmos = glm::scale(glm::mat4(1.0f), glm::vec3(6420., 6420., 6420.));
     // glm::mat4 m_modelEarth = glm::scale(glm::mat4(1.0f), glm::vec3(6360., 6360., 6360.));
 
-    cameraData.transform = glm::mat4(1.0f);
-    cameraData.view = glm::lookAt(camera->pos, camera->view + camera->pos, camera->up);
-    cameraData.projection = glm::perspective(camera->fov, swapChainExtent.width / (float)swapChainExtent.height, camera->near, camera->far);
-    cameraData.projection[1][1] *= -1;  // Flip Y axis for Vulkan coordinate system
+
     
-    memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
+    //memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
 
     // ubo.M = m_modelAtmos;
-    glm::mat4 lookat = glm::lookAt(camera->pos, camera->view + camera->pos, camera->up);
-    glm::mat4 proj = glm::perspective(camera->fov, swapChainExtent.width / (float)swapChainExtent.height, camera->near, camera->far);
+    //glm::mat4 lookat = glm::lookAt(camera->pos, camera->view + camera->pos, camera->up);
+    //glm::mat4 proj = glm::perspective(camera->fov, swapChainExtent.width / (float)swapChainExtent.height, camera->near, camera->far);
 
     // ubo.MVP = proj * lookat * m_modelAtmos;
 
@@ -981,15 +1000,15 @@ void VulkanControl::recreateSwapChain(GLFWwindow* window) {
 void VulkanControl::cleanUp() {
     cleanupSwapChain();
 
-    vkDestroyPipeline(device, graphicsPipeline1, nullptr);
-    vkDestroyPipeline(device, graphicsPipeline2, nullptr);
+    // vkDestroyPipeline(device, graphicsPipeline1, nullptr);
+    // vkDestroyPipeline(device, graphicsPipeline2, nullptr);
 
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyBuffer(device, cameraBuffer[i], nullptr);
-        vkFreeMemory(device, cameraBufferMemory[i], nullptr);
+        /*vkDestroyBuffer(device, cameraBuffer[i], nullptr);
+        vkFreeMemory(device, cameraBufferMemory[i], nullptr);*/
 
         vkDestroyBuffer(device, atmosphereBuffer[i], nullptr);
         vkFreeMemory(device, atmosphereBufferMemory[i], nullptr);
@@ -1000,23 +1019,17 @@ void VulkanControl::cleanUp() {
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
-    vkDestroySampler(device, textureSampler, nullptr);
-    vkDestroyImageView(device, textureImageView, nullptr);
-
-    vkDestroyImage(device, textureImage, nullptr);
-    vkFreeMemory(device, textureImageMemory, nullptr);
-
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(device, indexBuffer1, nullptr);
-    vkDestroyBuffer(device, indexBuffer2, nullptr);
-    vkFreeMemory(device, indexBufferMemory1, nullptr);
-    vkFreeMemory(device, indexBufferMemory2, nullptr);
+    // vkDestroyBuffer(device, indexBuffer1, nullptr);
+    // vkDestroyBuffer(device, indexBuffer2, nullptr);
+    // vkFreeMemory(device, indexBufferMemory1, nullptr);
+    // vkFreeMemory(device, indexBufferMemory2, nullptr);
 
-    vkDestroyBuffer(device, vertexBuffer1, nullptr);
-    vkDestroyBuffer(device, vertexBuffer2, nullptr);
-    vkFreeMemory(device, vertexBufferMemory1, nullptr);
-    vkFreeMemory(device, vertexBufferMemory2, nullptr);
+    // vkDestroyBuffer(device, vertexBuffer1, nullptr);
+    // vkDestroyBuffer(device, vertexBuffer2, nullptr);
+    // vkFreeMemory(device, vertexBufferMemory1, nullptr);
+    // vkFreeMemory(device, vertexBufferMemory2, nullptr);
 
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

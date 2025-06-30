@@ -3,16 +3,16 @@
 #include <iostream>
 #include <optional>
 
-#include "Atmosphere.h"
-#include "helper.h"
-#include "camera.h"
+//#include "Atmosphere.h"
+//#include "helper.h"
+#include <vector>
 
 class VulkanControl {
 public:
+    static uint32_t currentFrame;
     VkInstance instance;
     VkSurfaceKHR surface;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice device;
+
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
@@ -29,8 +29,8 @@ public:
     VkDescriptorSetLayout descriptorSetLayout;
 
     VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline1;
-    VkPipeline graphicsPipeline2;
+    // VkPipeline graphicsPipeline1;
+    // VkPipeline graphicsPipeline2;
 
 
     VkCommandPool commandPool;
@@ -39,24 +39,20 @@ public:
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    VkImageView textureImageView;
+    // VkImage textureImage;
+    // VkDeviceMemory textureImageMemory;
+    // VkImageView textureImageView;
 
-    VkSampler textureSampler;
+    // VkSampler textureSampler;
 
-    VkDeviceMemory vertexBufferMemory1;
-    VkDeviceMemory vertexBufferMemory2;
+    // VkDeviceMemory vertexBufferMemory1;
+    // VkDeviceMemory vertexBufferMemory2;
 
-    VkDeviceMemory indexBufferMemory1;
-    VkDeviceMemory indexBufferMemory2;
+    // VkDeviceMemory indexBufferMemory1;
+    // VkDeviceMemory indexBufferMemory2;
 
-    VkBuffer vertexBuffer1, indexBuffer1;
-    VkBuffer vertexBuffer2, indexBuffer2;
-
-    std::vector<VkBuffer>        cameraBuffer;
-    std::vector<VkDeviceMemory>  cameraBufferMemory;
-    std::vector<void*>           cameraBufferMapped;
+    // VkBuffer vertexBuffer1, indexBuffer1;
+    // VkBuffer vertexBuffer2, indexBuffer2;
 
     std::vector<VkBuffer>        atmosphereBuffer;
     std::vector<VkDeviceMemory>  atmosphereBufferMemory;
@@ -75,15 +71,14 @@ public:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
-    Camera* camera;
-    Sun* sun;
-    Atmosphere* atmosphere;
+    /*Sun* sun;
+    Atmosphere* atmosphere;*/
 
     SunBuffer sunData;
     AtmosphereBuffer atmosphereData;
-    CameraBuffer cameraData;
 
     VulkanControl();
+
     void createInstance();
     void setupDebugMessenger();
     void createSurface(GLFWwindow* window);
@@ -101,11 +96,15 @@ public:
     void createDepthResources();
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
     void createFramebuffers();
-    void createTextureImage(std::string texturePath);
-    void createTextureImageView();
-    void createTextureSampler();
-    void createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
-    void createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
+    // void createTextureImage(std::string texturePath);
+    // void createTextureImageView();
+    // void createTextureSampler();
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+
+    //void createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+    // void createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
@@ -116,10 +115,17 @@ public:
     void beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void endRenderPass(VkCommandBuffer commandBuffer);
     void recreateSwapChain(GLFWwindow* window);
-    void createCamera(Camera* rawCamera);
-    void CreateSun(Sun* Sun);
-    void CreateAtmosphere(Atmosphere* rawAtmosphere);
+    //void createCamera(Camera* rawCamera);
+    //void CreateSun(Sun* Sun);
+    //void CreateAtmosphere(Atmosphere* rawAtmosphere);
     void cleanUp();
+
+    void Init(GLFWwindow* window, float width, float height);
+
+    static VulkanControl* Get() { return s_theVulkan; }
+    VkDevice GetDevice() { return device; }
+    VkPhysicalDevice GetPhysicalDevice() { return physicalDevice; }
+
     ~VulkanControl();
 
 private:
@@ -141,8 +147,6 @@ private:
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     VkFormat findDepthFormat();
     void cleanupSwapChain();
@@ -150,4 +154,18 @@ private:
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     void executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> indices);
+
+
+    std::vector<Vertex> vertices1;
+    std::vector<uint32_t> indices1;
+    
+    std::vector<Vertex> vertices2;
+    std::vector<uint32_t> indices2;
+
+    static VulkanControl* s_theVulkan;
+
+
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device;
+
 };

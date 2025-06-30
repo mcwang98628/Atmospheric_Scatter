@@ -14,7 +14,7 @@ layout(binding = 0) uniform CameraBuffer {
 
 void main()
 {
-    vec4 posVec4 = vec4(position, 1.0);
+    vec4 posVec4 = vec4(position * 20.0, 1.0);
     vec4 worldPos = transform * posVec4;
     fsPosition = worldPos.xyz;
     gl_Position = projection * view * worldPos;
