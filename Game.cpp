@@ -1,0 +1,317 @@
+#include "Game.h"
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
+// settings
+#define MOUSE_SENSITIVITY 0.1f
+const uint32_t WIDTH = 2560;
+const uint32_t HEIGHT = 1440;
+
+const std::string TERRAIN_PATH = "models/Plane.obj";
+const std::string SKY_PATH = "models/sphere.obj";
+
+const std::string TEXTURE_PATH = "textures/viking_room.png";
+
+// Camera
+Camera camera = {};
+bool firstMouse = true;
+bool enableMouseCallback = true;
+float lastX = WIDTH / 2.0;
+float lastY = HEIGHT / 2.0;
+
+// Sun
+Sun sun = {};
+void UpdateSun(float delta);
+
+// Atmosphere
+Atmosphere atmosphere = {};
+
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+    
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+        
+    float xoffset = (xpos - lastX) * MOUSE_SENSITIVITY;
+    float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
+    lastX = xpos;
+    lastY = ypos;
+        
+    if (enableMouseCallback)
+        camera.UpdateLookAt(xoffset, yoffset);
+}
+
+void UpdateSun(float delta)
+{
+    sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926);
+    sun.sunDir.y = glm::sin(sun.sunAngle);
+    sun.sunDir.z = -glm::cos(sun.sunAngle);
+}
+
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) 
+{
+    
+}
+
+Game::Game()
+{
+}
+
+Game::~Game()
+{
+}
+
+void Game::run()
+{
+    initWindow();
+    initVulkan();
+    mainLoop();
+    cleanup();
+}
+
+void Game::initWindow()
+{
+    windowController = new WindowControl(this);
+    window = windowController->window;
+    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+void Game::initVulkan()
+{
+    vulkanController = new VulkanControl();
+    vulkanController->createInstance();
+    vulkanController->setupDebugMessenger();
+    vulkanController->createSurface(window);
+    vulkanController->pickPhysicalDevice();
+    vulkanController->createLogicalDevice();
+    vulkanController->createSwapChain();
+    vulkanController->createImageViews();
+    vulkanController->createRenderPass();
+    vulkanController->createDescriptorSetLayout();
+    vulkanController->createPipelineLayout();
+    vulkanController->createGraphicsPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv", vulkanController->graphicsPipeline1);
+    vulkanController->createGraphicsPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv", vulkanController->graphicsPipeline2);
+    vulkanController->createCommandPool();
+    vulkanController->createDepthResources();
+    vulkanController->createFramebuffers();
+    vulkanController->createTextureImage(TEXTURE_PATH);
+    vulkanController->createTextureImageView();
+    vulkanController->createTextureSampler();
+    loadModel(TERRAIN_PATH, vertices1, indices1);
+    loadModel(SKY_PATH, vertices2, indices2);
+
+    vulkanController->createCamera(&camera);
+    vulkanController->CreateSun(&sun);
+    vulkanController->createVertexBuffer(vertices1, vulkanController->vertexBuffer1, vulkanController->vertexBufferMemory1);
+    vulkanController->createIndexBuffer(indices1, vulkanController->indexBuffer1, vulkanController->indexBufferMemory1);
+
+    vulkanController->createVertexBuffer(vertices2, vulkanController->vertexBuffer2, vulkanController->vertexBufferMemory2);
+
+    vulkanController->createIndexBuffer(indices2, vulkanController->indexBuffer2, vulkanController->indexBufferMemory2);
+
+    vulkanController->createUniformBuffers();
+    vulkanController->createDescriptorPool();
+    vulkanController->createDescriptorSets();
+    vulkanController->createCommandBuffers();
+    vulkanController->createSyncObjects();
+}
+
+void Game::mainLoop()
+{
+    while (!glfwWindowShouldClose(window)) {
+        const auto currTime = static_cast<float>(glfwGetTime());
+        deltaTime = currTime - lastFrame;
+        lastFrame = currTime;
+
+        glfwPollEvents();
+        drawFrame();
+        processInput();
+        //UpdateSun(deltaTime);
+    }
+
+    vkDeviceWaitIdle(vulkanController->device);
+}
+
+void Game::cleanup()
+{
+    vulkanController->cleanUp();
+    if (windowController != NULL && window != NULL) {
+        windowController->destroyWindow(window);
+    }
+
+    glfwTerminate();
+}
+
+void Game::drawFrame()
+{
+    vkWaitForFences(vulkanController->device, 1, &vulkanController->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+    uint32_t imageIndex;
+    VkResult result = vkAcquireNextImageKHR(vulkanController->device, vulkanController->swapChain, UINT64_MAX, vulkanController->imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        vulkanController->recreateSwapChain(window);
+        return;
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        throw std::runtime_error("failed to acquire swap chain image!");
+    }
+
+    vulkanController->updateUniformBuffer(currentFrame);
+
+    vkResetFences(vulkanController->device, 1, &vulkanController->inFlightFences[currentFrame]);
+
+    vkResetCommandBuffer(vulkanController->commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(vulkanController->commandBuffers[currentFrame], &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
+    vulkanController->beginRenderPass(vulkanController->commandBuffers[currentFrame], imageIndex);
+    vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline2, vulkanController->vertexBuffer2, vulkanController->indexBuffer2, indices2);  // Draw blue sky first (background)
+    vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline1, vulkanController->vertexBuffer1, vulkanController->indexBuffer1, indices1);  // Draw green ground second (foreground)
+    vulkanController->endRenderPass(vulkanController->commandBuffers[currentFrame]);
+    if (vkEndCommandBuffer(vulkanController->commandBuffers[currentFrame]) != VK_SUCCESS) {
+        throw std::runtime_error("failed to record command buffer!");
+    }
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    VkSemaphore waitSemaphores[] = { vulkanController->imageAvailableSemaphores[currentFrame] };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
+
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &vulkanController->commandBuffers[currentFrame];
+
+    VkSemaphore signalSemaphores[] = { vulkanController->renderFinishedSemaphores[currentFrame] };
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
+
+    if (vkQueueSubmit(vulkanController->graphicsQueue, 1, &submitInfo, vulkanController->inFlightFences[currentFrame]) != VK_SUCCESS) {
+        throw std::runtime_error("failed to submit draw command buffer!");
+    }
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = signalSemaphores;
+
+    VkSwapchainKHR swapChains[] = { vulkanController->swapChain };
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+
+    presentInfo.pImageIndices = &imageIndex;
+
+    result = vkQueuePresentKHR(vulkanController->presentQueue, &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+        framebufferResized = false;
+        vulkanController->recreateSwapChain(window);
+    }
+    else if (result != VK_SUCCESS) {
+        throw std::runtime_error("failed to present swap chain image!");
+    }
+
+    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Game::processInput()
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    {
+        if (enableMouseCallback)
+        {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            enableMouseCallback = false;
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            enableMouseCallback = true;
+        }
+    }
+
+    float cameraSpeed = static_cast<float>(25 * deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.moveForward(cameraSpeed);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.moveForward(-cameraSpeed);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.moveHorizontal(cameraSpeed);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.moveHorizontal(-cameraSpeed);
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        camera.moveVertical(cameraSpeed);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        camera.moveVertical(-cameraSpeed);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        UpdateSun(0.01f);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        UpdateSun(-.01f);
+}
+
+void Game::loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices)
+{
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str())) {
+        throw std::runtime_error(warn + err);
+    }
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            Vertex vertex{};
+
+            vertex.pos = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2]
+            };
+
+            vertex.texCoord = {
+                attrib.texcoords[2 * index.texcoord_index + 0],
+                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+            };
+
+            vertex.normal = { 1.0f, 1.0f, 1.0f };
+
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<uint32_t>(destVer.size());
+                destVer.push_back(vertex);
+            }
+
+            destIndices.push_back(uniqueVertices[vertex]);
+        }
+    }
+    std::cout << destVer.size();
+}

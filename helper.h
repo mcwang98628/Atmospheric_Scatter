@@ -1,3 +1,6 @@
+#pragma once
+
+#include <array>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm/gtx/hash.hpp>
@@ -72,6 +75,16 @@ typedef struct Vertex {
         return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
     }
 } Vertex;
+
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(const Vertex& vertex) const {
+            return ((hash<glm::vec3>()(vertex.pos) ^
+                    (hash<glm::vec3>()(vertex.normal) << 1)) >> 1) ^
+                    (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
+}
 
 typedef struct CameraBuffer {
     alignas(16) glm::mat4 transform;
