@@ -35,7 +35,6 @@ public:
 
     // Descriptor management methods
 
-    void updateDescriptorSets();
     VkDescriptorSetLayoutBinding getCameraDescriptorLayoutBinding();
 
 private:
@@ -49,6 +48,9 @@ private:
 
     //static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
     void updateCameraVectors();
+
+    void updateDescriptorSets();
+
 
     CameraBuffer cameraData;
 

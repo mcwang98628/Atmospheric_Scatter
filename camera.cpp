@@ -24,7 +24,7 @@ Camera::Camera()
 			cameraBufferMemory[i]);
 		vkMapMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], 0, cameraSize, 0, &cameraBufferMapped[i]);
 	}
-
+	updateDescriptorSets();
 	createCamera();
     //glfwSetCursorPosCallback(WindowControl::GetWindow(), mouse_callback);
 

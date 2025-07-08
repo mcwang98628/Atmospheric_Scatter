@@ -107,7 +107,6 @@ void Game::initVulkan()
 
     // Initialize camera descriptor sets after VulkanControl creates the main descriptor sets
     camera = new Camera();
-    camera->updateDescriptorSets();
     
     vulkanController->createCommandBuffers();
     vulkanController->createSyncObjects();
@@ -134,6 +133,7 @@ void Game::mainLoop()
 
 void Game::cleanup()
 {
+    delete camera;
     VulkanControl* vulkanController = VulkanControl::Get();
     WindowControl* windowController = WindowControl::Get();
     vulkanController->cleanUp();
