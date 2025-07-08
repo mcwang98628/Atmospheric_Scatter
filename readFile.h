@@ -1,6 +1,4 @@
-#include <vector>
-#include <iostream>
-#include <fstream>
+#include "stdafx.h"
 
 static class FileReader {
 public:

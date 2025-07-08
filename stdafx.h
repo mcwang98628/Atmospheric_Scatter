@@ -1,12 +1,40 @@
 #pragma once
 
+// Standard C++ includes
 #include <array>
+#include <vector>
+#include <optional>
+#include <cstddef>  // for offsetof
+#include <iostream>
+#include <stdexcept>
+#include <algorithm>
+#include <chrono>
+#include <cstring>
+#include <cstdlib>
+#include <cstdint>
+#include <limits>
+#include <set>
+#include <unordered_map>
+#include <string>
+#include <fstream>
+
+// Vulkan (must come before GLFW)
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+// GLM includes
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
-#include <optional>
 
 #define MAX_FRAMES_IN_FLIGHT 2
+
+#define WIDTH 2560.f
+#define HEIGHT 1440.f
+
+#define MOUSE_SENSITIVITY 0.1f
+#define ENABLE_MOUSE_CALLBACK true
+
 
 #ifdef NDEBUG
     const bool enableValidationLayers = false;

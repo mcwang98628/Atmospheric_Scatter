@@ -1,12 +1,21 @@
-#include <GLFW/glfw3.h>
+#pragma once
+
+#include "stdafx.h"
+
 
 class WindowControl {
-    const uint32_t WIDTH = 2560;
-    const uint32_t HEIGHT = 1440;
 
 public:
-    GLFWwindow* window;
-    WindowControl(void* appPointer);
+    //WindowControl();
+    static GLFWwindow* GetWindow() { return window; }
     void destroyWindow(GLFWwindow* window);
     ~WindowControl();
+    static WindowControl* Get() { return m_window; }
+
+    static void Init(void* appPointer);
+
+private:
+    static GLFWwindow* window;
+    static WindowControl* m_window;
+
 };

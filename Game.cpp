@@ -1,24 +1,19 @@
+#include "stdafx.h"
 #include "Game.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#include "camera.h"
+
+#include "windowControl.h"
 
 // settings
-#define MOUSE_SENSITIVITY 0.1f
-const uint32_t WIDTH = 2560;
-const uint32_t HEIGHT = 1440;
+
 
 const std::string TERRAIN_PATH = "models/Plane.obj";
 const std::string SKY_PATH = "models/sphere.obj";
 
 const std::string TEXTURE_PATH = "textures/viking_room.png";
-
-// Camera
-Camera camera = {};
-bool firstMouse = true;
-bool enableMouseCallback = true;
-float lastX = WIDTH / 2.0;
-float lastY = HEIGHT / 2.0;
 
 // Sun
 Sun sun = {};
@@ -32,26 +27,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-{
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
-    
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-        
-    float xoffset = (xpos - lastX) * MOUSE_SENSITIVITY;
-    float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
-    lastX = xpos;
-    lastY = ypos;
-        
-    if (enableMouseCallback)
-        camera.UpdateLookAt(xoffset, yoffset);
-}
+
 
 void UpdateSun(float delta)
 {
@@ -84,21 +60,20 @@ void Game::run()
 
 void Game::initWindow()
 {
-    windowController = new WindowControl(this);
-    window = windowController->window;
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+    WindowControl::Init(this);
+    glfwSetFramebufferSizeCallback(WindowControl::GetWindow(), framebufferResizeCallback);
+    glfwSetScrollCallback(WindowControl::GetWindow(), scroll_callback);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(WindowControl::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 void Game::initVulkan()
 {
-    vulkanController = new VulkanControl();
+    VulkanControl* vulkanController = VulkanControl::Get();
+
     vulkanController->createInstance();
     vulkanController->setupDebugMessenger();
-    vulkanController->createSurface(window);
+    vulkanController->createSurface(WindowControl::GetWindow());
     vulkanController->pickPhysicalDevice();
     vulkanController->createLogicalDevice();
     vulkanController->createSwapChain();
@@ -117,7 +92,6 @@ void Game::initVulkan()
     loadModel(TERRAIN_PATH, vertices1, indices1);
     loadModel(SKY_PATH, vertices2, indices2);
 
-    vulkanController->createCamera(&camera);
     vulkanController->CreateSun(&sun);
     vulkanController->createVertexBuffer(vertices1, vulkanController->vertexBuffer1, vulkanController->vertexBufferMemory1);
     vulkanController->createIndexBuffer(indices1, vulkanController->indexBuffer1, vulkanController->indexBufferMemory1);
@@ -129,13 +103,20 @@ void Game::initVulkan()
     vulkanController->createUniformBuffers();
     vulkanController->createDescriptorPool();
     vulkanController->createDescriptorSets();
+    
+
+    // Initialize camera descriptor sets after VulkanControl creates the main descriptor sets
+    Camera* camera = new Camera();
+    camera->initializeDescriptorSets();
+    camera->updateDescriptorSets();
+    
     vulkanController->createCommandBuffers();
     vulkanController->createSyncObjects();
 }
 
 void Game::mainLoop()
 {
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(WindowControl::GetWindow())) {
         const auto currTime = static_cast<float>(glfwGetTime());
         deltaTime = currTime - lastFrame;
         lastFrame = currTime;
@@ -146,14 +127,16 @@ void Game::mainLoop()
         //UpdateSun(deltaTime);
     }
 
-    vkDeviceWaitIdle(vulkanController->device);
+    vkDeviceWaitIdle(VulkanControl::Get()->GetDeviceContext());
 }
 
 void Game::cleanup()
 {
+    VulkanControl* vulkanController = VulkanControl::Get();
+    WindowControl* windowController = WindowControl::Get();
     vulkanController->cleanUp();
-    if (windowController != NULL && window != NULL) {
-        windowController->destroyWindow(window);
+    if (windowController != nullptr && WindowControl::GetWindow() != nullptr) {
+        windowController->destroyWindow(WindowControl::GetWindow());
     }
 
     glfwTerminate();
@@ -161,13 +144,15 @@ void Game::cleanup()
 
 void Game::drawFrame()
 {
+    VulkanControl* vulkanController = VulkanControl::Get();
+
     vkWaitForFences(vulkanController->device, 1, &vulkanController->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(vulkanController->device, vulkanController->swapChain, UINT64_MAX, vulkanController->imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        vulkanController->recreateSwapChain(window);
+        vulkanController->recreateSwapChain(WindowControl::GetWindow());
         return;
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -229,7 +214,7 @@ void Game::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
         framebufferResized = false;
-        vulkanController->recreateSwapChain(window);
+        vulkanController->recreateSwapChain(WindowControl::GetWindow());
     }
     else if (result != VK_SUCCESS) {
         throw std::runtime_error("failed to present swap chain image!");
@@ -240,12 +225,12 @@ void Game::drawFrame()
 
 void Game::processInput()
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    /*if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
-        if (enableMouseCallback)
+        if (ENABLE_MOUSE_CALLBACK)
         {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             enableMouseCallback = false;
@@ -272,7 +257,7 @@ void Game::processInput()
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         UpdateSun(0.01f);
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        UpdateSun(-.01f);
+        UpdateSun(-.01f);*/
 }
 
 void Game::loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices)

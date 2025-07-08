@@ -1,5 +1,5 @@
 #pragma once
-#include <glm/vec3.hpp>
+#include "stdafx.h"
 
 typedef struct Sun
 {

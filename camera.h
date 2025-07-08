@@ -1,11 +1,13 @@
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
-#include <GLFW/glfw3.h>
+#pragma once
 
-#ifndef CAMERA
-#define CAMERA
+#include "stdafx.h"
+#include "vulkanControl.h"
+#include "windowControl.h"
+
 class Camera {
 public:
+    Camera();
+    ~Camera();
     glm::vec3 pos;
     glm::vec3 up;
     glm::vec3 view;
@@ -27,8 +29,32 @@ public:
     
     void UpdateLookAt(float xoffset, float yoffset);
     void UpdateFov(float yoffset);
+    void createCamera();
+
+    void updateCameraBuffer(uint32_t currentImage);
+
+    // Descriptor management methods
+    void initializeDescriptorSets();
+    void updateDescriptorSets();
+    VkDescriptorSetLayoutBinding getCameraDescriptorLayoutBinding();
 
 private:
+    std::vector<VkBuffer>        cameraBuffer;
+    std::vector<VkDeviceMemory>  cameraBufferMemory;
+    std::vector<void*>           cameraBufferMapped;
+    
+    // Descriptor set management
+    std::vector<VkWriteDescriptorSet> descriptorWrites;
+    
+
+    //static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
     void updateCameraVectors();
+
+    CameraBuffer cameraData;
+
+    // Camera
+    static bool firstMouse;
+    static bool enableMouseCallback;
+    static float lastX;
+    static float lastY;
 };
-#endif

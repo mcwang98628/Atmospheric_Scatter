@@ -1,14 +1,20 @@
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#include <iostream>
-#include <optional>
+#pragma once
 
+#include "stdafx.h"
 #include "Atmosphere.h"
-#include "helper.h"
-#include "camera.h"
 
 class VulkanControl {
 public:
+    static VulkanControl* Get() { 
+        if (m_graphics == nullptr) {
+            m_graphics = new VulkanControl();
+        }
+        return m_graphics;
+    }
+
+    VkDevice GetDeviceContext() { return device; }
+
+
     VkInstance instance;
     VkSurfaceKHR surface;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -54,10 +60,6 @@ public:
     VkBuffer vertexBuffer1, indexBuffer1;
     VkBuffer vertexBuffer2, indexBuffer2;
 
-    std::vector<VkBuffer>        cameraBuffer;
-    std::vector<VkDeviceMemory>  cameraBufferMemory;
-    std::vector<void*>           cameraBufferMapped;
-
     std::vector<VkBuffer>        atmosphereBuffer;
     std::vector<VkDeviceMemory>  atmosphereBufferMemory;
     std::vector<void*>           atmosphereBufferMapped;
@@ -75,13 +77,11 @@ public:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
-    Camera* camera;
     Sun* sun;
     Atmosphere* atmosphere;
 
     SunBuffer sunData;
     AtmosphereBuffer atmosphereData;
-    CameraBuffer cameraData;
 
     VulkanControl();
     void createInstance();
@@ -116,13 +116,21 @@ public:
     void beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void endRenderPass(VkCommandBuffer commandBuffer);
     void recreateSwapChain(GLFWwindow* window);
-    void createCamera(Camera* rawCamera);
     void CreateSun(Sun* Sun);
     void CreateAtmosphere(Atmosphere* rawAtmosphere);
+    VkDescriptorSet getDescriptorSet(uint32_t frameIndex);
     void cleanUp();
+
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+
     ~VulkanControl();
 
 private:
+
+    static VulkanControl* m_graphics;
+
     VkDebugUtilsMessengerEXT debugMessenger;
     GLFWwindow* curWindow;
 
@@ -141,8 +149,6 @@ private:
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     VkFormat findDepthFormat();
     void cleanupSwapChain();
