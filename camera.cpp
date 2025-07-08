@@ -4,13 +4,13 @@
 
 // Static member definitions
 bool Camera::firstMouse = true;
-bool Camera::enableMouseCallback = ENABLE_MOUSE_CALLBACK;
 float Camera::lastX = WIDTH / 2.0f;
 float Camera::lastY = HEIGHT / 2.0f;
 
 Camera::Camera()
 {
 	VkDeviceSize cameraSize = sizeof(CameraBuffer);
+	descriptorWrites.resize(MAX_FRAMES_IN_FLIGHT);
 
 	cameraBuffer.resize(MAX_FRAMES_IN_FLIGHT);
 	cameraBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
@@ -25,6 +25,7 @@ Camera::Camera()
 		vkMapMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], 0, cameraSize, 0, &cameraBufferMapped[i]);
 	}
 
+	createCamera();
     //glfwSetCursorPosCallback(WindowControl::GetWindow(), mouse_callback);
 
 }
@@ -95,11 +96,6 @@ void Camera::updateCameraBuffer(uint32_t currentImage)
 	cameraData.projection[1][1] *= -1;  // Flip Y axis for Vulkan coordinate system
 
 	memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
-}
-
-void Camera::initializeDescriptorSets()
-{
-	descriptorWrites.resize(MAX_FRAMES_IN_FLIGHT);
 }
 
 void Camera::updateDescriptorSets()

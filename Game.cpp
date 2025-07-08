@@ -106,8 +106,7 @@ void Game::initVulkan()
     
 
     // Initialize camera descriptor sets after VulkanControl creates the main descriptor sets
-    Camera* camera = new Camera();
-    camera->initializeDescriptorSets();
+    camera = new Camera();
     camera->updateDescriptorSets();
     
     vulkanController->createCommandBuffers();
@@ -122,8 +121,11 @@ void Game::mainLoop()
         lastFrame = currTime;
 
         glfwPollEvents();
+        camera->updateCameraBuffer(currentFrame);
+
         drawFrame();
         processInput();
+
         //UpdateSun(deltaTime);
     }
 
@@ -225,39 +227,39 @@ void Game::drawFrame()
 
 void Game::processInput()
 {
-    /*if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(WindowControl::GetWindow(), true);
 
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
-        if (ENABLE_MOUSE_CALLBACK)
+        if (enableMouseCallback)
         {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            glfwSetInputMode(WindowControl::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             enableMouseCallback = false;
         }
         else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            glfwSetInputMode(WindowControl::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             enableMouseCallback = true;
         }
     }
 
     float cameraSpeed = static_cast<float>(25 * deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.moveForward(cameraSpeed);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.moveForward(-cameraSpeed);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.moveHorizontal(cameraSpeed);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.moveHorizontal(-cameraSpeed);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        camera.moveVertical(cameraSpeed);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        camera.moveVertical(-cameraSpeed);
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_W) == GLFW_PRESS)
+        camera->moveForward(cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_S) == GLFW_PRESS)
+        camera->moveForward(-cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_A) == GLFW_PRESS)
+        camera->moveHorizontal(cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_D) == GLFW_PRESS)
+        camera->moveHorizontal(-cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_Q) == GLFW_PRESS)
+        camera->moveVertical(cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_E) == GLFW_PRESS)
+        camera->moveVertical(-cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_UP) == GLFW_PRESS)
         UpdateSun(0.01f);
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        UpdateSun(-.01f);*/
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
+        UpdateSun(-.01f);
 }
 
 void Game::loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices)

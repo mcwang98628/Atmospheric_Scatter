@@ -15,9 +15,6 @@ public:
 
 private:
    
-    //WindowControl* windowController = nullptr;
-    //VulkanControl* vulkanController = nullptr;
-
     std::vector<Vertex> vertices1;
     std::vector<uint32_t> indices1;
 
@@ -49,4 +46,6 @@ private:
     void loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices);
 
     Camera* camera;
+
+    bool enableMouseCallback = true;
 };

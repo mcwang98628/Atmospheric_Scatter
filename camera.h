@@ -34,7 +34,7 @@ public:
     void updateCameraBuffer(uint32_t currentImage);
 
     // Descriptor management methods
-    void initializeDescriptorSets();
+
     void updateDescriptorSets();
     VkDescriptorSetLayoutBinding getCameraDescriptorLayoutBinding();
 
@@ -54,7 +54,6 @@ private:
 
     // Camera
     static bool firstMouse;
-    static bool enableMouseCallback;
     static float lastX;
     static float lastY;
 };
