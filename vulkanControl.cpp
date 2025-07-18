@@ -617,25 +617,25 @@ void VulkanControl::createTextureSampler() {
 }
 
 
-void VulkanControl::createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
-    VkDeviceSize bufferSize = sizeof(verts[0]) * verts.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, verts.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
-
-    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
-
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
-}
+//void VulkanControl::createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
+//    VkDeviceSize bufferSize = sizeof(verts[0]) * verts.size();
+//
+//    VkBuffer stagingBuffer;
+//    VkDeviceMemory stagingBufferMemory;
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+//
+//    void* data;
+//    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+//    memcpy(data, verts.data(), (size_t)bufferSize);
+//    vkUnmapMemory(device, stagingBufferMemory);
+//
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
+//
+//    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
+//
+//    vkDestroyBuffer(device, stagingBuffer, nullptr);
+//    vkFreeMemory(device, stagingBufferMemory, nullptr);
+//}
 
 void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -647,28 +647,28 @@ void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
     endSingleTimeCommands(commandBuffer);
 }
 
-void VulkanControl::createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
-    if (index.empty()) {
-        return;
-    }
-    VkDeviceSize bufferSize = sizeof(index[0]) * index.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-    void* data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, index.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
-
-    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
-
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
-}
+//void VulkanControl::createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer) {
+//    if (index.empty()) {
+//        return;
+//    }
+//    VkDeviceSize bufferSize = sizeof(index[0]) * index.size();
+//
+//    VkBuffer stagingBuffer;
+//    VkDeviceMemory stagingBufferMemory;
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+//
+//    void* data;
+//    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+//    memcpy(data, index.data(), (size_t)bufferSize);
+//    vkUnmapMemory(device, stagingBufferMemory);
+//
+//    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, targetBuffer, targetMemoryBuffer);
+//
+//    copyBuffer(stagingBuffer, targetBuffer, bufferSize);
+//
+//    vkDestroyBuffer(device, stagingBuffer, nullptr);
+//    vkFreeMemory(device, stagingBufferMemory, nullptr);
+//}
 
 
 
@@ -870,13 +870,10 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
     // ubo.H_R = 7.994f;
     // ubo.H_M = 1.200f;
     // ubo.g = 0.888f;
-
-
 }
 
-void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame,VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> index)
+void VulkanControl::SetViewportAndScissors(VkCommandBuffer commandBuffer)
 {
-    // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -890,10 +887,16 @@ void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     scissor.offset = { 0, 0 };
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-
-    executeDrawCommand(commandBuffer, pipeline, vBuffer, iBuffer, index);
 }
+
+//void VulkanControl::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame,VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> index)
+//{
+//    // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+//    
+//    // vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+//
+//    executeDrawCommand(commandBuffer, pipeline, vBuffer, iBuffer, index);
+//}
 
 void VulkanControl::beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
@@ -938,8 +941,8 @@ void VulkanControl::recreateSwapChain(GLFWwindow* window) {
 void VulkanControl::cleanUp() {
     cleanupSwapChain();
 
-    vkDestroyPipeline(device, graphicsPipeline1, nullptr);
-    vkDestroyPipeline(device, graphicsPipeline2, nullptr);
+    //vkDestroyPipeline(device, graphicsPipeline1, nullptr);
+    //vkDestroyPipeline(device, graphicsPipeline2, nullptr);
 
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
@@ -965,7 +968,7 @@ void VulkanControl::cleanUp() {
 
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(device, indexBuffer1, nullptr);
+   /* vkDestroyBuffer(device, indexBuffer1, nullptr);
     vkDestroyBuffer(device, indexBuffer2, nullptr);
     vkFreeMemory(device, indexBufferMemory1, nullptr);
     vkFreeMemory(device, indexBufferMemory2, nullptr);
@@ -973,7 +976,7 @@ void VulkanControl::cleanUp() {
     vkDestroyBuffer(device, vertexBuffer1, nullptr);
     vkDestroyBuffer(device, vertexBuffer2, nullptr);
     vkFreeMemory(device, vertexBufferMemory1, nullptr);
-    vkFreeMemory(device, vertexBufferMemory2, nullptr);
+    vkFreeMemory(device, vertexBufferMemory2, nullptr);*/
 
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -1085,15 +1088,11 @@ void VulkanControl::executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline
         vkCmdBindIndexBuffer(commandBuffer, iBuffer, 0, VK_INDEX_TYPE_UINT32);
     }
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[0], 0, nullptr);
 
     if (!indices.empty()) {
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
     }
-
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vBuffer, offsets);
-    vkCmdBindIndexBuffer(commandBuffer, iBuffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[0], 0, nullptr);
-    vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 }
 
 void VulkanControl::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {

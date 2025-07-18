@@ -100,8 +100,6 @@ void Camera::updateCameraBuffer(uint32_t currentImage)
 
 void Camera::updateDescriptorSets()
 {
-	VkDevice device = VulkanControl::Get()->GetDeviceContext();
-	
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(i);
 		
@@ -118,7 +116,7 @@ void Camera::updateDescriptorSets()
 		descriptorWrites[i].descriptorCount = 1;
 		descriptorWrites[i].pBufferInfo = &camInfo;
 
-		vkUpdateDescriptorSets(device, 1, &descriptorWrites[i], 0, nullptr);
+		vkUpdateDescriptorSets(VulkanControl::Get()->GetDeviceContext(), 1, &descriptorWrites[i], 0, nullptr);
 	}
 }
 

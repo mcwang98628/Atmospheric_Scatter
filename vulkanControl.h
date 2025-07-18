@@ -35,8 +35,8 @@ public:
     VkDescriptorSetLayout descriptorSetLayout;
 
     VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline1;
-    VkPipeline graphicsPipeline2;
+    //VkPipeline graphicsPipeline1;
+    //VkPipeline graphicsPipeline2;
 
 
     VkCommandPool commandPool;
@@ -51,14 +51,14 @@ public:
 
     VkSampler textureSampler;
 
-    VkDeviceMemory vertexBufferMemory1;
+   /* VkDeviceMemory vertexBufferMemory1;
     VkDeviceMemory vertexBufferMemory2;
 
     VkDeviceMemory indexBufferMemory1;
     VkDeviceMemory indexBufferMemory2;
 
     VkBuffer vertexBuffer1, indexBuffer1;
-    VkBuffer vertexBuffer2, indexBuffer2;
+    VkBuffer vertexBuffer2, indexBuffer2;*/
 
     std::vector<VkBuffer>        atmosphereBuffer;
     std::vector<VkDeviceMemory>  atmosphereBufferMemory;
@@ -104,25 +104,27 @@ public:
     void createTextureImage(std::string texturePath);
     void createTextureImageView();
     void createTextureSampler();
-    void createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
-    void createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
+    //void createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
+    //void createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
     void createCommandBuffers();
     void createSyncObjects();
     void updateUniformBuffer(uint32_t currentImage);
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> index);
+    // void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> index);
     void beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void endRenderPass(VkCommandBuffer commandBuffer);
     void recreateSwapChain(GLFWwindow* window);
     void CreateSun(Sun* Sun);
     void CreateAtmosphere(Atmosphere* rawAtmosphere);
     VkDescriptorSet getDescriptorSet(uint32_t frameIndex);
+    VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
     void cleanUp();
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void SetViewportAndScissors(VkCommandBuffer commandBuffer);
 
 
     ~VulkanControl();
@@ -156,4 +158,5 @@ private:
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     void executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> indices);
+
 };

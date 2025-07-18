@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "Game.h"
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
 #include "camera.h"
 
 #include "windowControl.h"
@@ -41,6 +39,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     
 }
+
 
 Game::Game()
 {
@@ -81,28 +80,33 @@ void Game::initVulkan()
     vulkanController->createRenderPass();
     vulkanController->createDescriptorSetLayout();
     vulkanController->createPipelineLayout();
-    vulkanController->createGraphicsPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv", vulkanController->graphicsPipeline1);
-    vulkanController->createGraphicsPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv", vulkanController->graphicsPipeline2);
+    //vulkanController->createGraphicsPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv", vulkanController->graphicsPipeline1);
+    //vulkanController->createGraphicsPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv", vulkanController->graphicsPipeline2);
     vulkanController->createCommandPool();
     vulkanController->createDepthResources();
     vulkanController->createFramebuffers();
     vulkanController->createTextureImage(TEXTURE_PATH);
     vulkanController->createTextureImageView();
     vulkanController->createTextureSampler();
-    loadModel(TERRAIN_PATH, vertices1, indices1);
-    loadModel(SKY_PATH, vertices2, indices2);
+    terrain = new GameObject();
+    sky = new GameObject();
+    terrain->LoadModel(TERRAIN_PATH);
+    sky->LoadModel(SKY_PATH);
+    terrain->BindGraphicPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv");
+    sky->BindGraphicPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv");
+
 
     vulkanController->CreateSun(&sun);
-    vulkanController->createVertexBuffer(vertices1, vulkanController->vertexBuffer1, vulkanController->vertexBufferMemory1);
-    vulkanController->createIndexBuffer(indices1, vulkanController->indexBuffer1, vulkanController->indexBufferMemory1);
+    terrain->CreateVertexBuffer();
+    terrain->CreateIndexBuffer();
 
-    vulkanController->createVertexBuffer(vertices2, vulkanController->vertexBuffer2, vulkanController->vertexBufferMemory2);
-
-    vulkanController->createIndexBuffer(indices2, vulkanController->indexBuffer2, vulkanController->indexBufferMemory2);
+    sky->CreateVertexBuffer();
+    sky->CreateIndexBuffer();
 
     vulkanController->createUniformBuffers();
     vulkanController->createDescriptorPool();
     vulkanController->createDescriptorSets();
+
     
 
     // Initialize camera descriptor sets after VulkanControl creates the main descriptor sets
@@ -136,6 +140,8 @@ void Game::cleanup()
     delete camera;
     VulkanControl* vulkanController = VulkanControl::Get();
     WindowControl* windowController = WindowControl::Get();
+    delete terrain;
+    delete sky;
     vulkanController->cleanUp();
     if (windowController != nullptr && WindowControl::GetWindow() != nullptr) {
         windowController->destroyWindow(WindowControl::GetWindow());
@@ -173,8 +179,11 @@ void Game::drawFrame()
         throw std::runtime_error("failed to begin recording command buffer!");
     }
     vulkanController->beginRenderPass(vulkanController->commandBuffers[currentFrame], imageIndex);
-    vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline2, vulkanController->vertexBuffer2, vulkanController->indexBuffer2, indices2);  // Draw blue sky first (background)
-    vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline1, vulkanController->vertexBuffer1, vulkanController->indexBuffer1, indices1);  // Draw green ground second (foreground)
+    vulkanController->SetViewportAndScissors(vulkanController->commandBuffers[currentFrame]);
+    sky->Draw(vulkanController->commandBuffers[currentFrame], currentFrame);
+    terrain->Draw(vulkanController->commandBuffers[currentFrame], currentFrame);
+    // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline2, vulkanController->vertexBuffer2, vulkanController->indexBuffer2, indices2);  // Draw blue sky first (background)
+    // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline1, vulkanController->vertexBuffer1, vulkanController->indexBuffer1, indices1);  // Draw green ground second (foreground)
     vulkanController->endRenderPass(vulkanController->commandBuffers[currentFrame]);
     if (vkEndCommandBuffer(vulkanController->commandBuffers[currentFrame]) != VK_SUCCESS) {
         throw std::runtime_error("failed to record command buffer!");
@@ -262,43 +271,43 @@ void Game::processInput()
         UpdateSun(-.01f);
 }
 
-void Game::loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices)
-{
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
+// void Game::loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices)
+// {
+//     tinyobj::attrib_t attrib;
+//     std::vector<tinyobj::shape_t> shapes;
+//     std::vector<tinyobj::material_t> materials;
+//     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str())) {
-        throw std::runtime_error(warn + err);
-    }
+//     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str())) {
+//         throw std::runtime_error(warn + err);
+//     }
 
-    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+//     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            Vertex vertex{};
+//     for (const auto& shape : shapes) {
+//         for (const auto& index : shape.mesh.indices) {
+//             Vertex vertex{};
 
-            vertex.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
+//             vertex.pos = {
+//                 attrib.vertices[3 * index.vertex_index + 0],
+//                 attrib.vertices[3 * index.vertex_index + 1],
+//                 attrib.vertices[3 * index.vertex_index + 2]
+//             };
 
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
+//             vertex.texCoord = {
+//                 attrib.texcoords[2 * index.texcoord_index + 0],
+//                 1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+//             };
 
-            vertex.normal = { 1.0f, 1.0f, 1.0f };
+//             vertex.normal = { 1.0f, 1.0f, 1.0f };
 
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<uint32_t>(destVer.size());
-                destVer.push_back(vertex);
-            }
+//             if (uniqueVertices.count(vertex) == 0) {
+//                 uniqueVertices[vertex] = static_cast<uint32_t>(destVer.size());
+//                 destVer.push_back(vertex);
+//             }
 
-            destIndices.push_back(uniqueVertices[vertex]);
-        }
-    }
-    std::cout << destVer.size();
-}
+//             destIndices.push_back(uniqueVertices[vertex]);
+//         }
+//     }
+//     std::cout << destVer.size();
+// }
