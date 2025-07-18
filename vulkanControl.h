@@ -35,8 +35,6 @@ public:
     VkDescriptorSetLayout descriptorSetLayout;
 
     VkPipelineLayout pipelineLayout;
-    //VkPipeline graphicsPipeline1;
-    //VkPipeline graphicsPipeline2;
 
 
     VkCommandPool commandPool;
@@ -50,15 +48,6 @@ public:
     VkImageView textureImageView;
 
     VkSampler textureSampler;
-
-   /* VkDeviceMemory vertexBufferMemory1;
-    VkDeviceMemory vertexBufferMemory2;
-
-    VkDeviceMemory indexBufferMemory1;
-    VkDeviceMemory indexBufferMemory2;
-
-    VkBuffer vertexBuffer1, indexBuffer1;
-    VkBuffer vertexBuffer2, indexBuffer2;*/
 
     std::vector<VkBuffer>        atmosphereBuffer;
     std::vector<VkDeviceMemory>  atmosphereBufferMemory;
@@ -104,15 +93,12 @@ public:
     void createTextureImage(std::string texturePath);
     void createTextureImageView();
     void createTextureSampler();
-    //void createVertexBuffer(std::vector<Vertex> verts, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
-    //void createIndexBuffer(std::vector<uint32_t> index, VkBuffer& targetBuffer, VkDeviceMemory& targetMemoryBuffer);
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
     void createCommandBuffers();
     void createSyncObjects();
     void updateUniformBuffer(uint32_t currentImage);
-    // void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentFrame, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> index);
     void beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void endRenderPass(VkCommandBuffer commandBuffer);
     void recreateSwapChain(GLFWwindow* window);

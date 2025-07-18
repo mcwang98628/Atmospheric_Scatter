@@ -15,11 +15,6 @@ GameObject::~GameObject()
     vkFreeMemory(device, m_vertexBufferMemory, nullptr);
     vkFreeMemory(device, m_indexBufferMemory, nullptr);
 
-    // for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-	// 	vkDestroyBuffer(device, atmosphereBuffer[i], nullptr);
-    //     vkFreeMemory(device, atmosphereBufferMemory[i], nullptr);
-	// }
-
 }
 
 void GameObject::Update(float deltaTime)

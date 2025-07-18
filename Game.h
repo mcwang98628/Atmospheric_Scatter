@@ -16,13 +16,6 @@ public:
     void run();
 
 private:
-   
-    //std::vector<Vertex> vertices1;
-    //std::vector<uint32_t> indices1;
-
-    //std::vector<Vertex> vertices2;
-    //std::vector<uint32_t> indices2;
-
     uint32_t currentFrame = 0;
 
     bool framebufferResized = false;
@@ -47,8 +40,6 @@ private:
     bool hasStencilComponent(VkFormat format) {
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
-
-    //void loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices);
 
     Camera* camera;
 
