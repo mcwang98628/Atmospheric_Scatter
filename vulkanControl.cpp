@@ -6,6 +6,7 @@
 #include "VulkanControl.h"
 #include "readFile.h"
 #include "Atmosphere.h"
+#include "VertexFormat.h"
 
 // Static member definition
 VulkanControl* VulkanControl::m_graphics = nullptr;

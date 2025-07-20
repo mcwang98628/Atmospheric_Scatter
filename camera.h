@@ -33,6 +33,8 @@ public:
 
     void updateCameraBuffer(uint32_t currentImage);
 
+    void ProcessInput(double xoffset, double yoffset);
+
     // Descriptor management methods
 
     VkDescriptorSetLayoutBinding getCameraDescriptorLayoutBinding();
@@ -55,7 +57,7 @@ private:
     CameraBuffer cameraData;
 
     // Camera
-    static bool firstMouse;
-    static float lastX;
-    static float lastY;
+    bool firstMouse;
+    float lastX;
+    float lastY;
 };

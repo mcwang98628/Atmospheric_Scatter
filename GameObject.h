@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vulkanControl.h"
+#include "VertexFormat.h"
 
 class GameObject {
     public:

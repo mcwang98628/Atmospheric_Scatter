@@ -6,8 +6,6 @@
 #include "windowControl.h"
 
 // settings
-
-
 const std::string TERRAIN_PATH = "models/Plane.obj";
 const std::string SKY_PATH = "models/sphere.obj";
 
@@ -24,15 +22,18 @@ Atmosphere atmosphere = {};
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-
-
-
 void UpdateSun(float delta)
 {
     sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926);
     sun.sunDir.y = glm::sin(sun.sunAngle);
     sun.sunDir.z = -glm::cos(sun.sunAngle);
 }
+
+//void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+//{
+//   if (ENABLE_MOUSE_CALLBACK)
+//       camera->ProcessInput(xposIn, yposIn);
+//}
 
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) 
@@ -49,12 +50,11 @@ Game::~Game()
 {
 }
 
-void Game::run()
+bool Game::Init()
 {
     initWindow();
     initVulkan();
-    mainLoop();
-    cleanup();
+    return true;
 }
 
 void Game::initWindow()
@@ -64,6 +64,8 @@ void Game::initWindow()
     glfwSetScrollCallback(WindowControl::GetWindow(), scroll_callback);
 
     glfwSetInputMode(WindowControl::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetCursorPosCallback(WindowControl::GetWindow(), mouse_callback);
+
 }
 
 void Game::initVulkan()
@@ -88,13 +90,13 @@ void Game::initVulkan()
     vulkanController->createTextureImage(TEXTURE_PATH);
     vulkanController->createTextureImageView();
     vulkanController->createTextureSampler();
+
     terrain = new GameObject();
     sky = new GameObject();
     terrain->LoadModel(TERRAIN_PATH);
     sky->LoadModel(SKY_PATH);
     terrain->BindGraphicPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv");
     sky->BindGraphicPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv");
-
 
     vulkanController->CreateSun(&sun);
     terrain->CreateVertexBuffer();
@@ -116,26 +118,25 @@ void Game::initVulkan()
     vulkanController->createSyncObjects();
 }
 
-void Game::mainLoop()
+void Game::Update()
 {
-    while (!glfwWindowShouldClose(WindowControl::GetWindow())) {
-        const auto currTime = static_cast<float>(glfwGetTime());
-        deltaTime = currTime - lastFrame;
-        lastFrame = currTime;
 
-        glfwPollEvents();
-        camera->updateCameraBuffer(currentFrame);
+    const auto currTime = static_cast<float>(glfwGetTime());
+    deltaTime = currTime - lastFrame;
+    lastFrame = currTime;
 
-        drawFrame();
-        processInput();
+    glfwPollEvents();
+    camera->updateCameraBuffer(currentFrame);
 
-        //UpdateSun(deltaTime);
-    }
+    //drawFrame();
+    //processInput();
+
+    //UpdateSun(deltaTime);
 
     vkDeviceWaitIdle(VulkanControl::Get()->GetDeviceContext());
 }
 
-void Game::cleanup()
+void Game::ShutDown()
 {
     delete camera;
     VulkanControl* vulkanController = VulkanControl::Get();
@@ -150,7 +151,7 @@ void Game::cleanup()
     glfwTerminate();
 }
 
-void Game::drawFrame()
+void Game::DrawFrame()
 {
     VulkanControl* vulkanController = VulkanControl::Get();
 
@@ -234,7 +235,7 @@ void Game::drawFrame()
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void Game::processInput()
+void Game::ProcessInput()
 {
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(WindowControl::GetWindow(), true);

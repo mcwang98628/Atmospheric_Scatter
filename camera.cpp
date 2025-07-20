@@ -2,11 +2,6 @@
 #include "camera.h"
 #include "EventManager.h"
 
-// Static member definitions
-bool Camera::firstMouse = true;
-float Camera::lastX = WIDTH / 2.0f;
-float Camera::lastY = HEIGHT / 2.0f;
-
 Camera::Camera()
 {
 	VkDeviceSize cameraSize = sizeof(CameraBuffer);
@@ -26,7 +21,6 @@ Camera::Camera()
 	}
 	updateDescriptorSets();
 	createCamera();
-    //glfwSetCursorPosCallback(WindowControl::GetWindow(), mouse_callback);
 
 }
 
@@ -98,6 +92,7 @@ void Camera::updateCameraBuffer(uint32_t currentImage)
 	memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
 }
 
+
 void Camera::updateDescriptorSets()
 {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -132,6 +127,25 @@ VkDescriptorSetLayoutBinding Camera::getCameraDescriptorLayoutBinding()
 	return cameraBinding;
 }
 
+void Camera::ProcessInput(double xposIn, double yposIn)
+{
+	float xpos = static_cast<float>(xposIn);
+	float ypos = static_cast<float>(yposIn);
+
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = (xpos - lastX) * MOUSE_SENSITIVITY;
+	float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
+	lastX = xpos;
+	lastY = ypos;
+
+	// ProcessInput(xoffset, yoffset);
+}
 
 
 void Camera::createCamera() {
@@ -152,23 +166,3 @@ void Camera::createCamera() {
     pitch = 0.f;
 }
 
-//void Camera::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-//{
-//    float xpos = static_cast<float>(xposIn);
-//    float ypos = static_cast<float>(yposIn);
-//    
-//    if (firstMouse)
-//    {
-//        lastX = xpos;
-//        lastY = ypos;
-//        firstMouse = false;
-//    }
-//        
-//    float xoffset = (xpos - lastX) * MOUSE_SENSITIVITY;
-//    float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
-//    lastX = xpos;
-//    lastY = ypos;
-//        
-//    if (enableMouseCallback)
-//        UpdateLookAt(xoffset, yoffset);
-//}

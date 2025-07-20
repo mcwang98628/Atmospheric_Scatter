@@ -13,7 +13,11 @@ public:
     Game();
     ~Game();
 
-    void run();
+    bool Init();
+    void Update();
+    void ProcessInput();
+    void DrawFrame();
+    void ShutDown();
 
 private:
     uint32_t currentFrame = 0;
@@ -25,12 +29,6 @@ private:
 
     void initWindow();
     void initVulkan();
-    void mainLoop();
-    void cleanup();
-
-    void drawFrame();
-
-    void processInput();
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
         auto app = reinterpret_cast<Game*>(glfwGetWindowUserPointer(window));
@@ -42,6 +40,8 @@ private:
     }
 
     Camera* camera;
+
+    //void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 
     bool enableMouseCallback = true;
 };

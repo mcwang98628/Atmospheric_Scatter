@@ -2,51 +2,56 @@
 #include "stdafx.h"
 #include "Game.h"
 
+//#define MAX_LOADSTRING  100
+//
+//
+//WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
+//WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+//
+//
+//HINSTANCE hInst;
+Game game;
 
-//void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+
+//bool InitInstance(HINSTANCE hInstance, int nCmdShow)
 //{
-//    float xpos = static_cast<float>(xposIn);
-//    float ypos = static_cast<float>(yposIn);
+//    hInst = hInstance; // Store instance handle in our global variable
 //
-//    if (firstMouse)
+//    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+//        0, 0, WIDTH, HEIGHT, nullptr, nullptr, hInstance, nullptr);
+//
+//    if (!hWnd)
 //    {
-//        lastX = xpos;
-//        lastY = ypos;
-//        firstMouse = false;
+//        return FALSE;
 //    }
-//    
-//    float xoffset = (xpos - lastX) * MOUSE_SENSITIVITY;
-//    float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
-//    lastX = xpos;
-//    lastY = ypos;
-//    
-//    if (enableMouseCallback)
-//        camera.UpdateLookAt(xoffset, yoffset);
-//}
 //
-//void UpdateSun(float delta)
-//{
-//    sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926);
-//    sun.sunDir.y = glm::sin(sun.sunAngle);
-//    sun.sunDir.z = -glm::cos(sun.sunAngle);
-//}
+//    ShowWindow(hWnd, nCmdShow);
+//    UpdateWindow(hWnd);
 //
-//void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-//{
-//    // if (enableMouseCallback)
-//    //     UpdateSun(static_cast<float>(yoffset));
+//    game.Init(hWnd, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);
+//
+//    return TRUE;
 //}
 
 
 int main() {
-    Game app;
-
-    try {
-        app.run();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    bool running = true;
+    if (!game.Init())
+    {
         return EXIT_FAILURE;
     }
-
+    while (running)
+    {
+        try {
+            game.ProcessInput();
+            game.Update();
+            game.DrawFrame();
+        }
+        catch (const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+    game.ShutDown();
     return EXIT_SUCCESS;
 }
