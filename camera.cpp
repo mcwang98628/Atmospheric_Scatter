@@ -85,9 +85,12 @@ void Camera::updateCameraVectors()
 void Camera::updateCameraBuffer(uint32_t currentImage)
 {
 	cameraData.transform = glm::mat4(1.0f);
-	cameraData.view = glm::lookAt(pos, view + pos, up);
-	cameraData.projection = glm::perspective(fov, WIDTH / (float)HEIGHT, near, far);
-	cameraData.projection[1][1] *= -1;  // Flip Y axis for Vulkan coordinate system
+	glm::mat4 viewMat = glm::lookAt(pos, view + pos, up);
+	glm::mat4 projection = glm::perspective(fov, WIDTH / (float)HEIGHT, near, far);
+	projection[1][1] *= -1;  // Flip Y axis for Vulkan coordinate system
+
+	cameraData.viewProjection = projection * viewMat;  // Flip Y axis for Vulkan coordinate system
+
 
 	memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
 }

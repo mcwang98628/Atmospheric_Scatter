@@ -66,8 +66,7 @@ typedef struct SwapChainSupportDetails{
 
 typedef struct CameraBuffer {
     alignas(16) glm::mat4 transform;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 projection;
+    alignas(16) glm::mat4 viewProjection;
 } CameraBuffer;
 
 typedef struct AtmosphereBuffer {

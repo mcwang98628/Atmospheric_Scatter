@@ -4,18 +4,18 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
 
-layout(location = 0) out vec3 fsPosition;
+layout(location = 0) out vec4 fsPosition;
 
 layout(binding = 0) uniform CameraBuffer {
     mat4 transform;
-    mat4 view;
-    mat4 projection;
+    mat4 viewProjection;
 };
 
 void main()
 {
     vec4 posVec4 = vec4(position, 1.0);
     vec4 worldPos = transform * posVec4;
-    fsPosition = worldPos.xyz;
-    gl_Position = projection * view * worldPos;
+    worldPos = vec4(worldPos.x * 100, worldPos.y * 100, worldPos.z * 100, 1.0);
+    gl_Position = viewProjection * worldPos;
+    fsPosition = gl_Position;
 }
