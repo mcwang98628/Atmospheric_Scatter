@@ -46,8 +46,6 @@ void GameObject::LoadModel(std::string modelPath)
         throw std::runtime_error(warn + err);
     }
 
-    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
     for (const auto& shape : shapes) {
         for (const auto& index : shape.mesh.indices) {
             Vertex vertex{};
@@ -64,13 +62,9 @@ void GameObject::LoadModel(std::string modelPath)
             };
 
             vertex.normal = { 1.0f, 1.0f, 1.0f };
+            m_vertices.push_back(vertex);
+            m_indices.push_back(static_cast<uint32_t>(m_vertices.size()) - 1);
 
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<uint32_t>(m_vertices.size());
-                m_vertices.push_back(vertex);
-            }
-
-            m_indices.push_back(uniqueVertices[vertex]);
         }
     }
     //std::cout << m_vertices.size();

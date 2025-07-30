@@ -20,8 +20,9 @@ Camera::Camera()
 		vkMapMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], 0, cameraSize, 0, &cameraBufferMapped[i]);
 	}
 	updateDescriptorSets();
-	createCamera();
-
+    worldToCamMatrix = Matrix4::CreateTranslation(Vector3(0.0f, 1.0f, 0.0f)) * Matrix4::CreateRotationY(Math::Pi / 4);
+	worldToCamMatrix.Invert();
+	projectionMatrix = Matrix4::CreatePerspectiveFOV(fov, float(WIDTH), (float)HEIGHT, near, far);
 }
 
 Camera::~Camera()
@@ -33,65 +34,106 @@ Camera::~Camera()
 }
 
 void Camera::moveForward(float velocity) {
-	pos += velocity * view;
+	Matrix4 cameraWorldMatrix = worldToCamMatrix;
+	cameraWorldMatrix.Invert();
+	
+	Vector3 forwardDir = cameraWorldMatrix.GetZAxis();
+	
+	Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
+	cameraPosition -= velocity * forwardDir;
+	
+	cameraWorldMatrix.mat[3][0] = cameraPosition.x;
+	cameraWorldMatrix.mat[3][1] = cameraPosition.y;
+	cameraWorldMatrix.mat[3][2] = cameraPosition.z;
+
+	worldToCamMatrix = cameraWorldMatrix;
+	worldToCamMatrix.Invert();
 }
 
 void Camera::moveHorizontal(float velocity) {
-	pos -=  velocity * right;
+	Matrix4 cameraWorldMatrix = worldToCamMatrix;
+	cameraWorldMatrix.Invert();
+
+	Vector3 rightDir = cameraWorldMatrix.GetXAxis();
+
+	Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
+	cameraPosition += velocity * rightDir;
+
+	cameraWorldMatrix.mat[3][0] = cameraPosition.x;
+	cameraWorldMatrix.mat[3][1] = cameraPosition.y;
+	cameraWorldMatrix.mat[3][2] = cameraPosition.z;
+
+	worldToCamMatrix = cameraWorldMatrix;
+	worldToCamMatrix.Invert();
 }
 
 void Camera::moveVertical(float velocity) {
-	pos += velocity * up;
-}
+	Matrix4 cameraWorldMatrix = worldToCamMatrix;
+	cameraWorldMatrix.Invert();
 
-void Camera::UpdateLookAt(float xoffset, float yoffset)
-{
-	yaw += xoffset;
-	pitch += yoffset;
-	
-	// make sure that when pitch is out of bounds, screen doesn't get flipped
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	if (pitch < -89.0f)
-		pitch = -89.0f;
+	Vector3 forwardDir = cameraWorldMatrix.GetYAxis();
 
-	updateCameraVectors();
-	std::cout << "yaw: " << yaw << " pitch: " << pitch << std::endl;
-}
+	Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
+	cameraPosition += velocity * forwardDir;
 
-void Camera::UpdateFov(float yoffset)
-{
-	fov -= yoffset;
-	if (fov < 1.0f)
-		fov = 1.0f;
-	if (fov > 45.0f)
-		fov = 45.0f;
-}
+	cameraWorldMatrix.mat[3][0] = cameraPosition.x;
+	cameraWorldMatrix.mat[3][1] = cameraPosition.y;
+	cameraWorldMatrix.mat[3][2] = cameraPosition.z;
 
-void Camera::updateCameraVectors()
-{
-	// calculate the new Front vector
-	glm::vec3 front;
-	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front.y = sin(glm::radians(pitch));
-	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	view = glm::normalize(front);
-	
-	// also re-calculate the Right and Up vector
-	right = glm::normalize(glm::cross(view, worldUp));
-	up    = glm::normalize(glm::cross(right, view));
+	worldToCamMatrix = cameraWorldMatrix;
+	worldToCamMatrix.Invert();
 }
 
 void Camera::updateCameraBuffer(uint32_t currentImage)
 {
-	cameraData.transform = glm::mat4(1.0f);
-	glm::mat4 viewMat = glm::lookAt(pos, view + pos, up);
-	glm::mat4 projection = glm::perspective(fov, WIDTH / (float)HEIGHT, near, far);
-	projection[1][1] *= -1;  // Flip Y axis for Vulkan coordinate system
+	Matrix4 worldToCamMatrixInv = worldToCamMatrix;
+	worldToCamMatrixInv.Invert();
+	cameraData.cameraPosition = worldToCamMatrixInv.GetTranslation();
 
-	cameraData.viewProjection = projection * viewMat;  // Flip Y axis for Vulkan coordinate system
+	cameraData.viewProjection = projectionMatrix * worldToCamMatrix;
 
+	//glm::perspective
+		// --- DEBUG PRINT ---
+	// This will print the matrices and a test coordinate calculation ONCE.
+	static bool hasPrinted = false;
+	if (!hasPrinted)
+	{
+		std::cout << std::endl << "--- DEBUG ---" << std::endl;
+		
+		std::cout << "Camera World Position: " 
+			<< cameraData.cameraPosition.x << ", " 
+			<< cameraData.cameraPosition.y << ", " 
+			<< cameraData.cameraPosition.z << std::endl << std::endl;
 
+		std::cout << "My View Matrix (worldToCamMatrix):" << std::endl;
+		for (int row = 0; row < 4; row++) {
+			for (int col = 0; col < 4; col++) {
+				std::cout << worldToCamMatrix.mat[col][row] << "\t";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+
+		std::cout << "My Projection Matrix:" << std::endl;
+		for (int row = 0; row < 4; row++) {
+			for (int col = 0; col < 4; col++) {
+				std::cout << projectionMatrix.mat[col][row] << "\t";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+
+		Vector4 oneVertexCoord = Vector4(-20.f, 0.f, -20.f, 1.f);
+		Vector4 oneCustomResult = cameraData.viewProjection * oneVertexCoord;
+		
+		std::cout << "my coordinate result is: " 
+			<< oneCustomResult.x << " " << oneCustomResult.y << " " 
+			<< oneCustomResult.z << " " << oneCustomResult.w << std::endl;
+
+		std::cout << "--- END DEBUG ---" << std::endl << std::endl;
+		hasPrinted = true;
+	}
+	// --- END DEBUG PRINT ---
 	memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
 }
 
@@ -151,21 +193,39 @@ void Camera::ProcessInput(double xposIn, double yposIn)
 }
 
 
-void Camera::createCamera() {
-    pos = glm::vec3(0.0f, 1.f, 0.f);  // Position camera on surface of green planet (radius 50 + 2 units above)
-    // rawCamera->pos = glm::vec3(0.0f, 6360.f, 30.f);
+void Camera::SetCamData(Vector3 position, Quaternion Rotation)
+{
+	Matrix4 rotMat = Matrix4::CreateFromQuaternion(Rotation);
+	Matrix4 transMat = Matrix4::CreateTranslation(position);
 
-    // Try looking UPWARD instead (in case Vulkan coordinates are flipped)
-    view = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));  // Look forward and UP
-    up = glm::vec3(0.0f, 1.0f, 0.0f);
-    worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	worldToCamMatrix = rotMat * transMat;
+	worldToCamMatrix.Invert();
+}
 
-    right = glm::cross(view, up);
-    speed = 0;
-    fov = 45.f;
-    near = 0.01;
-    far = 2200.f;
-    yaw = 0.f;
-    pitch = 0.f;
+void Camera::PrintCurrentCamMatrix()
+{
+	std::cout << std::endl;
+	std::cout << "My WorldToCam Matrix:" << std::endl;
+	for (int row = 0; row < 4; row++) {
+		for (int col = 0; col < 4; col++) {
+			std::cout << worldToCamMatrix.mat[col][row] << "\t";  // Compare the actual world-to-cam matrix
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+
+
+	std::cout << std::endl;
+	std::cout << "Projection Matrix:" << std::endl;
+	for (int row = 0; row < 4; row++) {
+		for (int col = 0; col < 4; col++) {
+			std::cout << projectionMatrix.mat[col][row] << "\t";  // Note: [col][row] for GLM
+		}
+		std::cout << std::endl;
+	}
+	Vector4 oneVertexCoord = Vector4(-20.f, 0.f, -20.f, 1.f);
+	Vector4 oneCustomResult = cameraData.viewProjection * oneVertexCoord;
+
+	std::cout << "my coordinate result is" << oneCustomResult.x << " " << oneCustomResult.y << " " << oneCustomResult.z << " " << oneCustomResult.w << std::endl;
 }
 

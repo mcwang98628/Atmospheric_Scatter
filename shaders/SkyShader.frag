@@ -4,8 +4,8 @@ layout(location = 0) in vec4 fsPosition;     // Position of the fragment
 layout(location = 0) out vec4 finalColor;
 
 layout(binding = 0) uniform CameraBuffer {
-    mat4 transform;
-    mat4 viewProjection;
+    mat4 c_viewProjection;
+    vec3 c_cameraPosition;
 } cameraBuffer;
 
 layout(binding = 1) uniform AtmosphereConstants {

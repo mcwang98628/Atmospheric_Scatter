@@ -69,6 +69,7 @@ namespace Math
 }   //namespace Math
 
 class Quaternion;
+class Matrix4;
 
 //------------------------------------------------------------------------------------
 // 2D Vector
@@ -606,106 +607,116 @@ public:
 	friend Matrix4 operator*(const Matrix4& a, const Matrix4& b)
 	{
 		Matrix4 retVal;
-		// row 0
+		// col 0
 		retVal.mat[0][0] =
 			a.mat[0][0] * b.mat[0][0] +
-			a.mat[0][1] * b.mat[1][0] +
-			a.mat[0][2] * b.mat[2][0] +
-			a.mat[0][3] * b.mat[3][0];
+			a.mat[1][0] * b.mat[0][1] +
+			a.mat[2][0] * b.mat[0][2] +
+			a.mat[3][0] * b.mat[0][3];
 
 		retVal.mat[0][1] =
-			a.mat[0][0] * b.mat[0][1] +
-			a.mat[0][1] * b.mat[1][1] +
-			a.mat[0][2] * b.mat[2][1] +
-			a.mat[0][3] * b.mat[3][1];
+			a.mat[0][1] * b.mat[0][0] +
+			a.mat[1][1] * b.mat[0][1] +
+			a.mat[2][1] * b.mat[0][2] +
+			a.mat[3][1] * b.mat[0][3];
 
 		retVal.mat[0][2] =
-			a.mat[0][0] * b.mat[0][2] +
-			a.mat[0][1] * b.mat[1][2] +
-			a.mat[0][2] * b.mat[2][2] +
-			a.mat[0][3] * b.mat[3][2];
+			a.mat[0][2] * b.mat[0][0] +
+			a.mat[1][2] * b.mat[0][1] +
+			a.mat[2][2] * b.mat[0][2] +
+			a.mat[3][2] * b.mat[0][3];
 
 		retVal.mat[0][3] =
-			a.mat[0][0] * b.mat[0][3] +
-			a.mat[0][1] * b.mat[1][3] +
-			a.mat[0][2] * b.mat[2][3] +
-			a.mat[0][3] * b.mat[3][3];
+			a.mat[0][3] * b.mat[0][0] +
+			a.mat[1][3] * b.mat[0][1] +
+			a.mat[2][3] * b.mat[0][2] +
+			a.mat[3][3] * b.mat[0][3];
 
-		// row 1
+		// col 1
 		retVal.mat[1][0] =
-			a.mat[1][0] * b.mat[0][0] +
-			a.mat[1][1] * b.mat[1][0] +
-			a.mat[1][2] * b.mat[2][0] +
-			a.mat[1][3] * b.mat[3][0];
+			a.mat[0][0] * b.mat[1][0] +
+			a.mat[1][0] * b.mat[1][1] +
+			a.mat[2][0] * b.mat[1][2] +
+			a.mat[3][0] * b.mat[1][3];
 
 		retVal.mat[1][1] =
-			a.mat[1][0] * b.mat[0][1] +
+			a.mat[0][1] * b.mat[1][0] +
 			a.mat[1][1] * b.mat[1][1] +
-			a.mat[1][2] * b.mat[2][1] +
-			a.mat[1][3] * b.mat[3][1];
+			a.mat[2][1] * b.mat[1][2] +
+			a.mat[3][1] * b.mat[1][3];
 
 		retVal.mat[1][2] =
-			a.mat[1][0] * b.mat[0][2] +
-			a.mat[1][1] * b.mat[1][2] +
-			a.mat[1][2] * b.mat[2][2] +
-			a.mat[1][3] * b.mat[3][2];
+			a.mat[0][2] * b.mat[1][0] +
+			a.mat[1][2] * b.mat[1][1] +
+			a.mat[2][2] * b.mat[1][2] +
+			a.mat[3][2] * b.mat[1][3];
 
 		retVal.mat[1][3] =
-			a.mat[1][0] * b.mat[0][3] +
-			a.mat[1][1] * b.mat[1][3] +
-			a.mat[1][2] * b.mat[2][3] +
-			a.mat[1][3] * b.mat[3][3];
+			a.mat[0][3] * b.mat[1][0] +
+			a.mat[1][3] * b.mat[1][1] +
+			a.mat[2][3] * b.mat[1][2] +
+			a.mat[3][3] * b.mat[1][3];
 
-		// row 2
+		// col 2
 		retVal.mat[2][0] =
-			a.mat[2][0] * b.mat[0][0] +
-			a.mat[2][1] * b.mat[1][0] +
-			a.mat[2][2] * b.mat[2][0] +
-			a.mat[2][3] * b.mat[3][0];
+			a.mat[0][0] * b.mat[2][0] +
+			a.mat[1][0] * b.mat[2][1] +
+			a.mat[2][0] * b.mat[2][2] +
+			a.mat[3][0] * b.mat[2][3];
 
 		retVal.mat[2][1] =
-			a.mat[2][0] * b.mat[0][1] +
-			a.mat[2][1] * b.mat[1][1] +
-			a.mat[2][2] * b.mat[2][1] +
-			a.mat[2][3] * b.mat[3][1];
+			a.mat[0][1] * b.mat[2][0] +
+			a.mat[1][1] * b.mat[2][1] +
+			a.mat[2][1] * b.mat[2][2] +
+			a.mat[3][1] * b.mat[2][3];
 
 		retVal.mat[2][2] =
-			a.mat[2][0] * b.mat[0][2] +
-			a.mat[2][1] * b.mat[1][2] +
+			a.mat[0][2] * b.mat[2][0] +
+			a.mat[1][2] * b.mat[2][1] +
 			a.mat[2][2] * b.mat[2][2] +
-			a.mat[2][3] * b.mat[3][2];
+			a.mat[3][2] * b.mat[2][3];
 
 		retVal.mat[2][3] =
-			a.mat[2][0] * b.mat[0][3] +
-			a.mat[2][1] * b.mat[1][3] +
-			a.mat[2][2] * b.mat[2][3] +
-			a.mat[2][3] * b.mat[3][3];
+			a.mat[0][3] * b.mat[2][0] +
+			a.mat[1][3] * b.mat[2][1] +
+			a.mat[2][3] * b.mat[2][2] +
+			a.mat[3][3] * b.mat[2][3];
 
 		// row 3
 		retVal.mat[3][0] =
-			a.mat[3][0] * b.mat[0][0] +
-			a.mat[3][1] * b.mat[1][0] +
-			a.mat[3][2] * b.mat[2][0] +
-			a.mat[3][3] * b.mat[3][0];
+			a.mat[0][0] * b.mat[3][0] +
+			a.mat[1][0] * b.mat[3][1] +
+			a.mat[2][0] * b.mat[3][2] +
+			a.mat[3][0] * b.mat[3][3];
 
 		retVal.mat[3][1] =
-			a.mat[3][0] * b.mat[0][1] +
-			a.mat[3][1] * b.mat[1][1] +
-			a.mat[3][2] * b.mat[2][1] +
-			a.mat[3][3] * b.mat[3][1];
+			a.mat[0][1] * b.mat[3][0] +
+			a.mat[1][1] * b.mat[3][1] +
+			a.mat[2][1] * b.mat[3][2] +
+			a.mat[3][1] * b.mat[3][3];
 
 		retVal.mat[3][2] =
-			a.mat[3][0] * b.mat[0][2] +
-			a.mat[3][1] * b.mat[1][2] +
-			a.mat[3][2] * b.mat[2][2] +
-			a.mat[3][3] * b.mat[3][2];
+			a.mat[0][2] * b.mat[3][0] +
+			a.mat[1][2] * b.mat[3][1] +
+			a.mat[2][2] * b.mat[3][2] +
+			a.mat[3][2] * b.mat[3][3];
 
 		retVal.mat[3][3] =
-			a.mat[3][0] * b.mat[0][3] +
-			a.mat[3][1] * b.mat[1][3] +
-			a.mat[3][2] * b.mat[2][3] +
+			a.mat[0][3] * b.mat[3][0] +
+			a.mat[1][3] * b.mat[3][1] +
+			a.mat[2][3] * b.mat[3][2] +
 			a.mat[3][3] * b.mat[3][3];
 
+		return retVal;
+	}
+
+	friend Vector4 operator*(const Matrix4& a, const Vector4& b)
+	{
+		Vector4 retVal;
+		retVal.x = a.mat[0][0] * b.x + a.mat[1][0] * b.y + a.mat[2][0] * b.z + a.mat[3][0] * b.w;
+		retVal.y = a.mat[0][1] * b.x + a.mat[1][1] * b.y + a.mat[2][1] * b.z + a.mat[3][1] * b.w;
+		retVal.z = a.mat[0][2] * b.x + a.mat[1][2] * b.y + a.mat[2][2] * b.z + a.mat[3][2] * b.w;
+		retVal.w = a.mat[0][3] * b.x + a.mat[1][3] * b.y + a.mat[2][3] * b.z + a.mat[3][3] * b.w;
 		return retVal;
 	}
 
@@ -724,19 +735,19 @@ public:
         return Vector3(mat[3][0], mat[3][1], mat[3][2]);
 	}
 
-	// Get the X axis of the matrix (forward)
+	// Get the X axis of the matrix (right)
 	Vector3 GetXAxis() const
 	{
         return Vector3(mat[0][0], mat[0][1], mat[0][2]);
 	}
 
-	// Get the Y axis of the matrix (left)
+	// Get the Y axis of the matrix (Up)
 	Vector3 GetYAxis() const
 	{
         return Vector3(mat[1][0], mat[1][1], mat[1][2]);
 	}
 
-	// Get the Z axis of the matrix (up)
+	// Get the Z axis of the matrix (Backward)
 	Vector3 GetZAxis() const
 	{
         return Vector3(mat[2][0], mat[2][1], mat[2][2]);
@@ -873,7 +884,7 @@ public:
 			{ 1.0f,     0.0f,       0.0f,       0.0f },
 			{ 0.0f,     1.0f,       0.0f,       0.0f },
 			{ 0.0f,     0.0f,       1.0f,       0.0f },
-            { trans.x,  trans.y,    trans.z,    1.0f },
+            { trans.x,     trans.y,      trans.z,    1.0f },
 		};
 		return Matrix4(temp);
 	}
@@ -910,12 +921,16 @@ public:
 	{
 		float yScale = 1.0f / tanf(fovY / 2.0f);
 		float xScale = yScale * height / width;
+
+		float A = farZ / (nearZ - farZ);
+		float B = (nearZ * farZ) / (nearZ - farZ);
+		
 		float temp[4][4] =
 		{
 			{ xScale, 0.0f, 0.0f, 0.0f },
 			{ 0.0f, yScale, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, farZ / (farZ - nearZ), 1.0f },
-			{ 0.0f, 0.0f, -nearZ * farZ / (farZ - nearZ), 0.0f }
+			{ 0.0f, 0.0f, A, -1.0f},
+			{ 0.0f, 0.0f, B, 0.0f }
 		};
 		return Matrix4(temp);
 	}

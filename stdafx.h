@@ -22,12 +22,15 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 // GLM includes
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 
 #define MAX_FRAMES_IN_FLIGHT 2
+
 
 #define WIDTH 2560.f
 #define HEIGHT 1440.f
@@ -43,7 +46,8 @@
 #endif
 
 const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_KHR_MAINTENANCE1_EXTENSION_NAME
 };
 
 const std::vector<const char*> validationLayers = {
@@ -58,18 +62,13 @@ typedef struct QueueFamilyIndices{
     }
 } QueueFamilyIndices;
 
-typedef struct SwapChainSupportDetails{
+struct SwapChainSupportDetails{
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
-} SwapChainSupportDetails;
+};
 
-typedef struct CameraBuffer {
-    alignas(16) glm::mat4 transform;
-    alignas(16) glm::mat4 viewProjection;
-} CameraBuffer;
-
-typedef struct AtmosphereBuffer {
+struct AtmosphereBuffer {
     alignas(4) int viewSamples = 16;
     alignas(4) int lightSamples = 8;
     alignas(16) glm::vec3 sunIntensity = glm::vec3(20.f, 20.f, 20.f);    // Intensity of the sun
@@ -82,8 +81,8 @@ typedef struct AtmosphereBuffer {
     alignas(4) float rayleighScaleHeight = 7.994f;
     alignas(4) float mieScaleHeight = 1.2f;
     alignas(4) float anisotropy = 0.888f;  //  - anisotropy of the medium
-} AtmosphereBuffer;
+};
 
-typedef struct SunBuffer {
+struct SunBuffer {
     alignas(16) glm::vec3  sunPos;    // Position of the sun, light direction
-} SunBuffer;
+};

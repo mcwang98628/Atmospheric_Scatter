@@ -259,17 +259,19 @@ void Game::ProcessInput()
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_S) == GLFW_PRESS)
         camera->moveForward(-cameraSpeed);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_A) == GLFW_PRESS)
-        camera->moveHorizontal(cameraSpeed);
-    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_D) == GLFW_PRESS)
         camera->moveHorizontal(-cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_D) == GLFW_PRESS)
+        camera->moveHorizontal(cameraSpeed);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_Q) == GLFW_PRESS)
-        camera->moveVertical(cameraSpeed);
-    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_E) == GLFW_PRESS)
         camera->moveVertical(-cameraSpeed);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_E) == GLFW_PRESS)
+        camera->moveVertical(cameraSpeed);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_UP) == GLFW_PRESS)
         UpdateSun(0.01f);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
         UpdateSun(-.01f);
+    if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_F) == GLFW_PRESS)
+        camera->PrintCurrentCamMatrix();
 }
 
 // void Game::loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices)
