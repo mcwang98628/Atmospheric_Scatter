@@ -13,9 +13,13 @@ public:
     Game();
     ~Game();
 
+    static Camera* camera;
+
+
     bool Init();
     void Update();
     void ProcessInput();
+    static void ProcessMouseInput(GLFWwindow* win, double xposIn, double yposIn);
     void DrawFrame();
     void ShutDown();
 
@@ -39,7 +43,6 @@ private:
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
-    Camera* camera;
 
     //void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 

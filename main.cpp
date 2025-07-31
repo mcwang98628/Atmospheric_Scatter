@@ -38,6 +38,8 @@ int main() {
     bool running = true;
     if (!game.Init())
     {
+        
+
         return EXIT_FAILURE;
     }
     while (running)

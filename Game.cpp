@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "Game.h"
 
-#include "camera.h"
-
 #include "windowControl.h"
 
 // settings
@@ -10,6 +8,9 @@ const std::string TERRAIN_PATH = "models/Plane.obj";
 const std::string SKY_PATH = "models/sphere.obj";
 
 const std::string TEXTURE_PATH = "textures/viking_room.png";
+
+Camera* Game::camera = new Camera();
+
 
 // Sun
 Sun sun = {};
@@ -28,12 +29,6 @@ void UpdateSun(float delta)
     sun.sunDir.y = glm::sin(sun.sunAngle);
     sun.sunDir.z = -glm::cos(sun.sunAngle);
 }
-
-//void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-//{
-//   if (ENABLE_MOUSE_CALLBACK)
-//       camera->ProcessInput(xposIn, yposIn);
-//}
 
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) 
@@ -64,8 +59,7 @@ void Game::initWindow()
     glfwSetScrollCallback(WindowControl::GetWindow(), scroll_callback);
 
     glfwSetInputMode(WindowControl::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    // glfwSetCursorPosCallback(WindowControl::GetWindow(), mouse_callback);
-
+    glfwSetCursorPosCallback(WindowControl::GetWindow(), ProcessMouseInput);
 }
 
 void Game::initVulkan()
@@ -112,7 +106,7 @@ void Game::initVulkan()
     
 
     // Initialize camera descriptor sets after VulkanControl creates the main descriptor sets
-    camera = new Camera();
+    camera->Init();
     
     vulkanController->createCommandBuffers();
     vulkanController->createSyncObjects();
@@ -275,43 +269,8 @@ void Game::ProcessInput()
         camera->PrintCurrentCamMatrix();
 }
 
-// void Game::loadModel(std::string modelPath, std::vector<Vertex>& destVer, std::vector<uint32_t>& destIndices)
-// {
-//     tinyobj::attrib_t attrib;
-//     std::vector<tinyobj::shape_t> shapes;
-//     std::vector<tinyobj::material_t> materials;
-//     std::string warn, err;
-
-//     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str())) {
-//         throw std::runtime_error(warn + err);
-//     }
-
-//     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
-//     for (const auto& shape : shapes) {
-//         for (const auto& index : shape.mesh.indices) {
-//             Vertex vertex{};
-
-//             vertex.pos = {
-//                 attrib.vertices[3 * index.vertex_index + 0],
-//                 attrib.vertices[3 * index.vertex_index + 1],
-//                 attrib.vertices[3 * index.vertex_index + 2]
-//             };
-
-//             vertex.texCoord = {
-//                 attrib.texcoords[2 * index.texcoord_index + 0],
-//                 1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-//             };
-
-//             vertex.normal = { 1.0f, 1.0f, 1.0f };
-
-//             if (uniqueVertices.count(vertex) == 0) {
-//                 uniqueVertices[vertex] = static_cast<uint32_t>(destVer.size());
-//                 destVer.push_back(vertex);
-//             }
-
-//             destIndices.push_back(uniqueVertices[vertex]);
-//         }
-//     }
-//     std::cout << destVer.size();
-// }
+void Game::ProcessMouseInput(GLFWwindow* win, double xposIn, double yposIn)
+{
+    if (ENABLE_MOUSE_CALLBACK)
+        camera->ProcessInput(xposIn, yposIn);
+}

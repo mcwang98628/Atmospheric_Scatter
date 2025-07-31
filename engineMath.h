@@ -891,17 +891,25 @@ public:
 
 	static Matrix4 CreateLookAt(const Vector3& eye, const Vector3& at, const Vector3& up)
 	{
-        Vector3 forward = Vector3::Normalize(at - eye);
-        Vector3 left = Vector3::Normalize(Vector3::Cross(up, forward));
-        Vector3 newUp = Vector3::Normalize(Vector3::Cross(forward, left));
+        Vector3 forward = Vector3::Normalize(eye - at);
+        Vector3 right = Vector3::Normalize(Vector3::Cross(up, forward));
+        Vector3 newUp = Vector3::Normalize(Vector3::Cross(forward, right));
 
 		float temp[4][4] =
 		{
-			{ left.x, left.y, left.z, 0.0f },
+			{ right.x, right.y, right.z, 0.0f },
 			{ newUp.x, newUp.y, newUp.z, 0.0f },
 			{ forward.x, forward.y, forward.z, 0.0f },
 			{ eye.x, eye.y, eye.z, 1.0f }
 		};
+
+		/*float temp[4][4] =
+		{
+			{ right.x, newUp.x, forward.x, 0.0f },
+			{ right.y, newUp.y, forward.y, 0.0f },
+			{ right.z, newUp.z, forward.z, 0.0f },
+			{ eye.x, eye.y, eye.z, 1.0f }
+		};*/
 		return Matrix4(temp);
 	}
 

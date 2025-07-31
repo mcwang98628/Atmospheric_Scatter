@@ -4,6 +4,19 @@
 
 Camera::Camera()
 {
+
+}
+
+Camera::~Camera()
+{
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), cameraBuffer[i], nullptr);
+		vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], nullptr);
+	}
+}
+
+void Camera::Init()
+{
 	VkDeviceSize cameraSize = sizeof(CameraBuffer);
 	descriptorWrites.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -20,17 +33,11 @@ Camera::Camera()
 		vkMapMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], 0, cameraSize, 0, &cameraBufferMapped[i]);
 	}
 	updateDescriptorSets();
-    worldToCamMatrix = Matrix4::CreateTranslation(Vector3(0.0f, 1.0f, 0.0f)) * Matrix4::CreateRotationY(Math::Pi / 4);
+	worldToCamMatrix = Matrix4::CreateTranslation(Vector3(0.0f, 1.0f, 0.0f)) * Matrix4::CreateRotationY(Math::Pi / 4);
+	yaw = Math::ToDegrees(Math::Pi / 4);
+
 	worldToCamMatrix.Invert();
 	projectionMatrix = Matrix4::CreatePerspectiveFOV(fov, float(WIDTH), (float)HEIGHT, near, far);
-}
-
-Camera::~Camera()
-{
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), cameraBuffer[i], nullptr);
-		vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], nullptr);
-	}
 }
 
 void Camera::moveForward(float velocity) {
@@ -84,6 +91,55 @@ void Camera::moveVertical(float velocity) {
 	worldToCamMatrix.Invert();
 }
 
+void Camera::UpdateCameraTransform(float xoffset, float yoffset)
+{
+	yaw += xoffset;
+	pitch += yoffset;	
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+	if (yaw > 180.0f)
+		yaw =180.f;
+	if (yaw < -180.0f)
+		yaw = -180.f;
+	/*std::cout << "new Yaw" << yaw << std::endl;
+	std::cout << "new pitch" << pitch << std::endl;*/
+	Vector3 newFront;
+	newFront.x = -sinf(Math::ToRadians(yaw)) * cosf(Math::ToRadians(pitch));
+	newFront.y = -sinf(Math::ToRadians(pitch));
+	newFront.z = cosf(Math::ToRadians(yaw)) * cosf(Math::ToRadians(pitch));
+	newFront.Normalize();
+	Matrix4 camToWorldMat = worldToCamMatrix;
+	camToWorldMat.Invert();
+	/*std::cout << "My camToWorldMat Before:" << std::endl;
+	for (int row = 0; row < 4; row++) {
+		for (int col = 0; col < 4; col++) {
+			std::cout << camToWorldMat.mat[col][row] << "\t";
+		}
+		std::cout << std::endl;
+	}*/
+	Vector3 worldUp = Vector3(0.f, 1.f, 0.f);
+	Vector3 newRight = Vector3::Cross(newFront, worldUp);
+	Vector3 newUp = Vector3::Cross(newRight, newFront);
+
+	//Vector3 curTranslation = camToWorldMat.GetTranslation();
+	//std::cout << "My cam Translation before is:" << std::endl;
+	//std::cout << curTranslation.x << "\t" << curTranslation.y << "\t" << curTranslation.z << "\t";
+	//std::cout << std::endl;
+	Matrix4 newLookatMat = Matrix4::CreateLookAt(camToWorldMat.GetTranslation(), camToWorldMat.GetTranslation() + newFront, newUp);
+	/*std::cout << "My camToWorldMat After:" << std::endl;
+	for (int row = 0; row < 4; row++) {
+		for (int col = 0; col < 4; col++) {
+			std::cout << newLookatMat.mat[col][row] << "\t";
+		}
+		std::cout << std::endl;
+	}*/
+	newLookatMat.Invert();
+	worldToCamMatrix = newLookatMat;
+
+}
+
 void Camera::updateCameraBuffer(uint32_t currentImage)
 {
 	Matrix4 worldToCamMatrixInv = worldToCamMatrix;
@@ -92,7 +148,6 @@ void Camera::updateCameraBuffer(uint32_t currentImage)
 
 	cameraData.viewProjection = projectionMatrix * worldToCamMatrix;
 
-	//glm::perspective
 		// --- DEBUG PRINT ---
 	// This will print the matrices and a test coordinate calculation ONCE.
 	static bool hasPrinted = false;
@@ -185,11 +240,11 @@ void Camera::ProcessInput(double xposIn, double yposIn)
 	}
 
 	float xoffset = (xpos - lastX) * MOUSE_SENSITIVITY;
-	float yoffset = (lastY - ypos) * MOUSE_SENSITIVITY;
+	float yoffset = (ypos - lastY) * MOUSE_SENSITIVITY;
 	lastX = xpos;
 	lastY = ypos;
 
-	// ProcessInput(xoffset, yoffset);
+	UpdateCameraTransform(xoffset, yoffset);
 }
 
 

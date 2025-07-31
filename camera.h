@@ -13,6 +13,8 @@ public:
     float fov = 45.f;
     float near = 0.01;
     float far = 2200.f;
+    float yaw = 0.0f;
+    float pitch = 0.0f;
 
     bool isPrinted = false;
     struct CameraBuffer {
@@ -21,9 +23,11 @@ public:
         float padding;
     };
 
+    void Init();
     void moveForward(float velocity);
     void moveHorizontal(float velocity);
     void moveVertical(float velocity);
+    void UpdateCameraTransform(float xoffset, float yoffset);
     
     void updateCameraBuffer(uint32_t currentImage);
 
@@ -45,10 +49,6 @@ private:
     // Descriptor set management
     std::vector<VkWriteDescriptorSet> descriptorWrites;
     
-
-    //static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-    void updateCameraVectors();
-
     void updateDescriptorSets();
 
     Matrix4 projectionMatrix;
