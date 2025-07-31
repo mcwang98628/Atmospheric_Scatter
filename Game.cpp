@@ -138,6 +138,7 @@ void Game::Update()
 
 void Game::ShutDown()
 {
+    vkDeviceWaitIdle(VulkanControl::Get()->GetDeviceContext());
     delete camera;
     VulkanControl* vulkanController = VulkanControl::Get();
     WindowControl* windowController = WindowControl::Get();

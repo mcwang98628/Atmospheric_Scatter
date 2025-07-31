@@ -96,7 +96,7 @@ void Camera::updateCameraBuffer(uint32_t currentImage)
 		// --- DEBUG PRINT ---
 	// This will print the matrices and a test coordinate calculation ONCE.
 	static bool hasPrinted = false;
-	if (!hasPrinted)
+	/*if (!hasPrinted)
 	{
 		std::cout << std::endl << "--- DEBUG ---" << std::endl;
 		
@@ -132,7 +132,7 @@ void Camera::updateCameraBuffer(uint32_t currentImage)
 
 		std::cout << "--- END DEBUG ---" << std::endl << std::endl;
 		hasPrinted = true;
-	}
+	}*/
 	// --- END DEBUG PRINT ---
 	memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
 }

@@ -43,6 +43,8 @@ int main() {
     while (running)
     {
         try {
+            if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+                running = false;
             game.ProcessInput();
             game.Update();
             game.DrawFrame();
