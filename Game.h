@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "GameObject.h"
+#include "Atmosphere.h"
 
 
 
@@ -29,7 +30,7 @@ private:
     bool framebufferResized = false;
 
     GameObject* terrain;
-    GameObject* sky;
+    Atmosphere* sky;
 
     void initWindow();
     void initVulkan();

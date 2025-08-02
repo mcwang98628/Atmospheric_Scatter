@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include "Atmosphere.h"
 
 class VulkanControl {
 public:
@@ -36,7 +35,6 @@ public:
 
     VkPipelineLayout pipelineLayout;
 
-
     VkCommandPool commandPool;
 
     VkImage depthImage;
@@ -49,14 +47,6 @@ public:
 
     VkSampler textureSampler;
 
-    std::vector<VkBuffer>        atmosphereBuffer;
-    std::vector<VkDeviceMemory>  atmosphereBufferMemory;
-    std::vector<void*>           atmosphereBufferMapped;
-
-    std::vector<VkBuffer> sunBuffer;
-    std::vector<VkDeviceMemory> sunBufferMemory;
-    std::vector<void*> sunBufferMapped;
-
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
 
@@ -65,12 +55,6 @@ public:
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
-
-    Sun* sun;
-    Atmosphere* atmosphere;
-
-    SunBuffer sunData;
-    AtmosphereBuffer atmosphereData;
 
     VulkanControl();
     void createInstance();
@@ -93,7 +77,6 @@ public:
     void createTextureImage(std::string texturePath);
     void createTextureImageView();
     void createTextureSampler();
-    void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
     void createCommandBuffers();
@@ -102,8 +85,6 @@ public:
     void beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void endRenderPass(VkCommandBuffer commandBuffer);
     void recreateSwapChain(GLFWwindow* window);
-    void CreateSun(Sun* Sun);
-    void CreateAtmosphere(Atmosphere* rawAtmosphere);
     VkDescriptorSet getDescriptorSet(uint32_t frameIndex);
     VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
     void cleanUp();
@@ -111,7 +92,6 @@ public:
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void SetViewportAndScissors(VkCommandBuffer commandBuffer);
-
 
     ~VulkanControl();
 

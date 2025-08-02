@@ -5,10 +5,11 @@
 
 class GameObject {
     public:
+        GameObject();
         ~GameObject();
 
-        void Update(float deltaTime);
-        void Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame);
+        virtual void Update(float deltaTime);
+        virtual void Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame);
 
         void LoadModel(std::string modelPath);
         void CreateVertexBuffer();
@@ -16,11 +17,12 @@ class GameObject {
 
 
        /* virtual void CreateUniformBuffers();*/
-       void UpdateDescriptorSets();
-       void BindGraphicPipeline(std::string vertShaderPath, std::string fragShaderPath);
+       virtual void UpdateDescriptorSets();
+       virtual void BindGraphicPipeline(std::string vertShaderPath, std::string fragShaderPath);
+       virtual void CreateUniformBuffers();
 
        struct RenderData {
-            glm::mat4 m_transform;
+            Matrix4 m_transform;
         };
 
     private:

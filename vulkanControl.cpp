@@ -675,55 +675,11 @@ void VulkanControl::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
 //    vkFreeMemory(device, stagingBufferMemory, nullptr);
 //}
 
-
-
-void VulkanControl::CreateSun(Sun* rawSun) {
-    rawSun->I_sun = glm::vec3(20.f);
-    rawSun->sunAngle = glm::radians(.3f);
-    rawSun->sunDir = glm::vec3(0.0f, 5.0f, 100.0f);
-    
-    sun = rawSun;
-}
-
-void VulkanControl::CreateAtmosphere(Atmosphere* rawAtmosphere) {
-    atmosphere = rawAtmosphere;
-}
-
 VkDescriptorSet VulkanControl::getDescriptorSet(uint32_t frameIndex) {
     if (frameIndex < descriptorSets.size()) {
         return descriptorSets[frameIndex];
     }
     return VK_NULL_HANDLE;
-}
-
-void VulkanControl::createUniformBuffers() {
-    VkDeviceSize atmosphereSize = sizeof(AtmosphereBuffer);
-    VkDeviceSize sunSize        = sizeof(SunBuffer);
-
-    atmosphereBuffer.resize(MAX_FRAMES_IN_FLIGHT);
-    atmosphereBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
-    atmosphereBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
-
-    sunBuffer.resize(MAX_FRAMES_IN_FLIGHT);
-    sunBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
-    sunBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
-
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        createBuffer(sunSize,
-                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                     sunBuffer[i],
-                     sunBufferMemory[i]);
-        vkMapMemory(device, sunBufferMemory[i], 0, sunSize, 0, &sunBufferMapped[i]);
-
-        createBuffer(atmosphereSize,
-                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    atmosphereBuffer[i],
-                    atmosphereBufferMemory[i]);
-        vkMapMemory(device, atmosphereBufferMemory[i], 0, atmosphereSize, 0, &atmosphereBufferMapped[i]);
-        memcpy(atmosphereBufferMapped[i], &atmosphereData, sizeof(atmosphereData));
-    }
 }
 
 void VulkanControl::createDescriptorPool() {
@@ -763,24 +719,24 @@ void VulkanControl::createDescriptorSets() {
         camInfo.offset = 0;
         camInfo.range = sizeof(CameraBuffer);*/
 
-        VkDescriptorBufferInfo atmInfo{};
-        atmInfo.buffer = atmosphereBuffer[i];
-        atmInfo.offset = 0;
-        atmInfo.range = sizeof(AtmosphereBuffer);
+        //VkDescriptorBufferInfo atmInfo{};
+        //atmInfo.buffer = atmosphereBuffer[i];
+        //atmInfo.offset = 0;
+        //atmInfo.range = sizeof(AtmosphereBuffer);
 
-        VkDescriptorBufferInfo sunInfo{};
-        sunInfo.buffer = sunBuffer[i];
-        sunInfo.offset = 0;
-        sunInfo.range = sizeof(SunBuffer);
+        //VkDescriptorBufferInfo sunInfo{};
+        //sunInfo.buffer = sunBuffer[i];
+        //sunInfo.offset = 0;
+        //sunInfo.range = sizeof(SunBuffer);
 
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.imageView = textureImageView;
         imageInfo.sampler = textureSampler;
 
-        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+        VkWriteDescriptorSet descriptorWrites{};
 
-        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        /*descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
         descriptorWrites[0].dstBinding = 1;
         descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -792,17 +748,17 @@ void VulkanControl::createDescriptorSets() {
         descriptorWrites[1].dstBinding = 2;
         descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pBufferInfo = &sunInfo;
+        descriptorWrites[1].pBufferInfo = &sunInfo;*/
 
-        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[2].dstSet = descriptorSets[i];
-        descriptorWrites[2].dstBinding = 3;
-        descriptorWrites[2].dstArrayElement = 0;
-        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrites[2].descriptorCount = 1;
-        descriptorWrites[2].pImageInfo = &imageInfo;
+        descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites.dstSet = descriptorSets[i];
+        descriptorWrites.dstBinding = 3;
+        descriptorWrites.dstArrayElement = 0;
+        descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites.descriptorCount = 1;
+        descriptorWrites.pImageInfo = &imageInfo;
 
-        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        vkUpdateDescriptorSets(device, 1, &descriptorWrites, 0, nullptr);
     }
 }
 
@@ -865,8 +821,8 @@ void VulkanControl::updateUniformBuffer(uint32_t currentImage) {
 
     // ubo.viewPos = camera->pos;
     
-    sunData.sunPos = sun->sunDir;
-    memcpy(sunBufferMapped[currentImage], &sunData, sizeof(sunData));
+    /*sunData.sunPos = sun->sunDir;
+    memcpy(sunBufferMapped[currentImage], &sunData, sizeof(sunData));*/
 
     // ubo.viewSamples = 16;
     // ubo.lightSamples = 8;
@@ -952,16 +908,16 @@ void VulkanControl::cleanUp() {
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    //for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         // vkDestroyBuffer(device, cameraBuffer[i], nullptr);
         // vkFreeMemory(device, cameraBufferMemory[i], nullptr);
 
-        vkDestroyBuffer(device, atmosphereBuffer[i], nullptr);
+       /* vkDestroyBuffer(device, atmosphereBuffer[i], nullptr);
         vkFreeMemory(device, atmosphereBufferMemory[i], nullptr);
 
         vkDestroyBuffer(device, sunBuffer[i], nullptr);
-        vkFreeMemory(device, sunBufferMemory[i], nullptr);
-    }
+        vkFreeMemory(device, sunBufferMemory[i], nullptr);*/
+    //}
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 

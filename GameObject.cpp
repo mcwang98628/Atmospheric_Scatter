@@ -5,6 +5,11 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+
+GameObject::GameObject()
+{
+}
+
 GameObject::~GameObject()
 {
 	VkDevice device = VulkanControl::Get()->GetDeviceContext();
@@ -120,4 +125,8 @@ void GameObject::UpdateDescriptorSets()
 void GameObject::BindGraphicPipeline(std::string vertShaderPath, std::string fragShaderPath)
 {
     VulkanControl::Get()->createGraphicsPipeline(vertShaderPath, fragShaderPath, m_pipeline);
+}
+
+void GameObject::CreateUniformBuffers()
+{
 }

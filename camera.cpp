@@ -18,7 +18,6 @@ Camera::~Camera()
 void Camera::Init()
 {
 	VkDeviceSize cameraSize = sizeof(CameraBuffer);
-	descriptorWrites.resize(MAX_FRAMES_IN_FLIGHT);
 
 	cameraBuffer.resize(MAX_FRAMES_IN_FLIGHT);
 	cameraBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
@@ -195,6 +194,8 @@ void Camera::updateCameraBuffer(uint32_t currentImage)
 
 void Camera::updateDescriptorSets()
 {
+
+	std::vector<VkWriteDescriptorSet> descriptorWrites(2);
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(i);
 		
@@ -215,17 +216,17 @@ void Camera::updateDescriptorSets()
 	}
 }
 
-VkDescriptorSetLayoutBinding Camera::getCameraDescriptorLayoutBinding()
-{
-	VkDescriptorSetLayoutBinding cameraBinding{};
-	cameraBinding.binding            = 0;
-	cameraBinding.descriptorCount    = 1;
-	cameraBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	cameraBinding.pImmutableSamplers = nullptr;
-	cameraBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	
-	return cameraBinding;
-}
+//VkDescriptorSetLayoutBinding Camera::getCameraDescriptorLayoutBinding()
+//{
+//	VkDescriptorSetLayoutBinding cameraBinding{};
+//	cameraBinding.binding            = 0;
+//	cameraBinding.descriptorCount    = 1;
+//	cameraBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+//	cameraBinding.pImmutableSamplers = nullptr;
+//	cameraBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+//	
+//	return cameraBinding;
+//}
 
 void Camera::ProcessInput(double xposIn, double yposIn)
 {

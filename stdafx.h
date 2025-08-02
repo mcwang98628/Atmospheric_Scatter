@@ -68,21 +68,6 @@ struct SwapChainSupportDetails{
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct AtmosphereBuffer {
-    alignas(4) int viewSamples = 16;
-    alignas(4) int lightSamples = 8;
-    alignas(16) glm::vec3 sunIntensity = glm::vec3(20.f, 20.f, 20.f);    // Intensity of the sun
-
-    alignas(16) glm::vec3 scatterRayleigh = glm::vec3(5.802f, 13.558f, 33.1f);
-    alignas(4) float scatterMie = 3.996f;
-    alignas(4) float absorbMie = 4.4f;
-    alignas(4) float planetRadius = 6360;
-    alignas(4) float atmosphereRadius = 6460;
-    alignas(4) float rayleighScaleHeight = 7.994f;
-    alignas(4) float mieScaleHeight = 1.2f;
-    alignas(4) float anisotropy = 0.888f;  //  - anisotropy of the medium
-};
-
 struct SunBuffer {
     alignas(16) glm::vec3  sunPos;    // Position of the sun, light direction
 };

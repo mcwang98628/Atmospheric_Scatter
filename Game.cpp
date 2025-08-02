@@ -13,22 +13,22 @@ Camera* Game::camera = new Camera();
 
 
 // Sun
-Sun sun = {};
-void UpdateSun(float delta);
+//Sun sun = {};
+//void UpdateSun(float delta);
 
 // Atmosphere
-Atmosphere atmosphere = {};
+//Atmosphere atmosphere = {};
 
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-void UpdateSun(float delta)
-{
-    sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926);
-    sun.sunDir.y = glm::sin(sun.sunAngle);
-    sun.sunDir.z = -glm::cos(sun.sunAngle);
-}
+//void UpdateSun(float delta)
+//{
+//    sun.sunAngle = glm::mod(sun.sunAngle + 0.5 * delta, 3.1415926);
+//    sun.sunDir.y = glm::sin(sun.sunAngle);
+//    sun.sunDir.z = -glm::cos(sun.sunAngle);
+//}
 
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) 
@@ -85,25 +85,22 @@ void Game::initVulkan()
     vulkanController->createTextureImageView();
     vulkanController->createTextureSampler();
 
+    vulkanController->createDescriptorPool();
+    vulkanController->createDescriptorSets();
+
     terrain = new GameObject();
-    sky = new GameObject();
+    sky = new Atmosphere();
     terrain->LoadModel(TERRAIN_PATH);
     sky->LoadModel(SKY_PATH);
     terrain->BindGraphicPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv");
     sky->BindGraphicPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv");
 
-    vulkanController->CreateSun(&sun);
+    // vulkanController->CreateSun(&sun);
     terrain->CreateVertexBuffer();
     terrain->CreateIndexBuffer();
 
     sky->CreateVertexBuffer();
     sky->CreateIndexBuffer();
-
-    vulkanController->createUniformBuffers();
-    vulkanController->createDescriptorPool();
-    vulkanController->createDescriptorSets();
-
-    
 
     // Initialize camera descriptor sets after VulkanControl creates the main descriptor sets
     camera->Init();
@@ -262,9 +259,9 @@ void Game::ProcessInput()
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_E) == GLFW_PRESS)
         camera->moveVertical(cameraSpeed);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_UP) == GLFW_PRESS)
-        UpdateSun(0.01f);
+        //UpdateSun(0.01f);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
-        UpdateSun(-.01f);
+        //UpdateSun(-.01f);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_F) == GLFW_PRESS)
         camera->PrintCurrentCamMatrix();
 }

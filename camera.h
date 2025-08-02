@@ -39,15 +39,10 @@ public:
 
     // Descriptor management methods
 
-    VkDescriptorSetLayoutBinding getCameraDescriptorLayoutBinding();
-
 private:
     std::vector<VkBuffer>        cameraBuffer;
     std::vector<VkDeviceMemory>  cameraBufferMemory;
     std::vector<void*>           cameraBufferMapped;
-    
-    // Descriptor set management
-    std::vector<VkWriteDescriptorSet> descriptorWrites;
     
     void updateDescriptorSets();
 
