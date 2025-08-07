@@ -20,7 +20,7 @@ public:
         int lightSamples = 8;
         float absorbMie = 4.4f;
         float  planetRadius = 6360;
-        float  atmosphereRadius = 6460;
+        float  atmosphereRadius = 100;
 
         float rayleighScaleHeight = 7.994f;
         float mieScaleHeight = 1.2f;
@@ -30,20 +30,22 @@ public:
 
     struct SunBuffer
     {
-        Vector3 sunDir = Vector3(0.f, 5.0f, 100.f);
+        Vector3 sunDir = Vector3(0.f, .707f, -.707f);
         float padding;
     };
 
     void Update(float deltaTime) override;
     void Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame) override;
     void UpdateDescriptorSets() override;
-
+    void UpdateSun(float deltaSun);
     void CreateUniformBuffers() override;
 
 
 private:
     AtmosphereBuffer m_atmosphereBuffer;
     SunBuffer m_sunBuffer;
+
+    float sunAngle = .785;
 
     std::vector<VkBuffer>        atmosphereBuffer;
     std::vector<VkDeviceMemory>  atmosphereBufferMemory;

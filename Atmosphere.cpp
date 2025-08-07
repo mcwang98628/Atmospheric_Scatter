@@ -23,6 +23,18 @@ void Atmosphere::Update(float deltaTime)
 
 }
 
+void Atmosphere::UpdateSun(float deltaSun) {
+	sunAngle += deltaSun;
+	if(sunAngle > Math::Pi){
+		sunAngle = Math::Pi;
+	} else if(sunAngle < 0.f){
+		sunAngle = 0.f;
+	}
+	m_sunBuffer.sunDir.y = sinf(sunAngle);
+	m_sunBuffer.sunDir.z = -cosf(sunAngle);
+	m_sunBuffer.sunDir.Normalize();
+}
+
 void Atmosphere::Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
 	memcpy(sunBufferMapped[currentFrame], &m_sunBuffer, sizeof(m_sunBuffer));

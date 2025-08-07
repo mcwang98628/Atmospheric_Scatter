@@ -259,9 +259,9 @@ void Game::ProcessInput()
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_E) == GLFW_PRESS)
         camera->moveVertical(cameraSpeed);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_UP) == GLFW_PRESS)
-        //UpdateSun(0.01f);
+        sky->UpdateSun(0.01f);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
-        //UpdateSun(-.01f);
+        sky->UpdateSun(-.01f);
     if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_F) == GLFW_PRESS)
         camera->PrintCurrentCamMatrix();
 }

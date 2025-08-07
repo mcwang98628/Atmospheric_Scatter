@@ -3,6 +3,7 @@
 #define M_PI 3.1415926535897932384626433832795
 
 layout(location = 0) in vec4 fsPosition;     // Position of the fragment
+layout(location = 1) in vec4 worldPosition;
 layout(location = 0) out vec4 finalColor;
 
 layout(binding = 0) uniform CameraBuffer {
@@ -80,7 +81,9 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
     }
 
     // Distance between samples - length of each segment
-    t.y = min(t.y, raySphereIntersection(origin, ray, atmosphereConstants.planetRadius).x);
+    // t.y = min(t.y, raySphereIntersection(origin, ray, atmosphereConstants.planetRadius).x);
+    t.y = min(t.y, 100.f);
+
     float segmentLen = (t.y - t.x) / float(atmosphereConstants.viewSamples);
 
     // TODO t min
@@ -116,20 +119,22 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
         vec3 vSample = origin + ray * (tCurrent + segmentLen * 0.5);
 
         // Height of the sample above the planet
-        float height = length(vSample) - atmosphereConstants.planetRadius;
+        // float height = length(vSample) - atmosphereConstants.planetRadius;
+        float height = length(vSample);
+        
 
         // Optical depth for Rayleigh and Mie scattering for current sample
         float h_R = exp(-height / atmosphereConstants.rayleighScaleHeight) * segmentLen;
         float h_M = exp(-height / atmosphereConstants.mieScaleHeight) * segmentLen;
         optDepth_R += h_R;
         optDepth_M += h_M;
-
+        // segmentLen = 6.25, height = -4.125, h_M = 194.45, h_R = 10.47
         //--------------------------------
         // Secondary - light ray
         float segmentLenLight = 
             raySphereIntersection(vSample, sunDir, atmosphereConstants.atmosphereRadius).y / float(atmosphereConstants.lightSamples);
         float tCurrentLight = 0.0;
-
+        // segmentLenLight = 110
         // Light optical depth 
         float optDepthLight_R = 0.0;
         float optDepthLight_M = 0.0;
@@ -141,28 +146,30 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
             vec3 lSample = vSample + sunDir * 
                            (tCurrentLight + segmentLenLight * 0.5);
             // Height of the light ray sample
-            float heightLight = length(lSample) - atmosphereConstants.planetRadius;
+            // float heightLight = length(lSample) - atmosphereConstants.planetRadius;
+            float heightLight = length(lSample);
+
 
             // TODO check sample above the ground
-
+            // heightLight = -1.13
             optDepthLight_R += exp(-heightLight / atmosphereConstants.rayleighScaleHeight) * segmentLenLight;
             optDepthLight_M += exp(-heightLight / atmosphereConstants.mieScaleHeight) * segmentLenLight;
-
+            //x = 0.25, exp(x) = 2.5 segmentLenLight: 807, optDepthLight_R = 126.92, optDepthLight_M = 284.29
             // Next light sample
             tCurrentLight += segmentLenLight;
         }
         // TODO check sample above ground
 
-        vec3 sigma_R = atmosphereConstants.scatterRayleigh * h_R;
-        float mieDensity = h_M;
-        float sigma_mieS = atmosphereConstants.scatterMie  * mieDensity;
-        float sigma_mieT = (atmosphereConstants.scatterMie  + atmosphereConstants.absorbMie) * mieDensity;
-        vec3 ozone = vec3(0.65e-3f, 1.881e-3f, 0.085e-3f) * max(0.0f, 1 - 0.5 * abs(height - 25) / 15);
+        // vec3 sigma_R = atmosphereConstants.scatterRayleigh * h_R;
+        // float mieDensity = h_M;
+        // float sigma_mieS = atmosphereConstants.scatterMie  * mieDensity;
+        // float sigma_mieT = (atmosphereConstants.scatterMie  + atmosphereConstants.absorbMie) * mieDensity;
+        // vec3 ozone = vec3(0.65e-3f, 1.881e-3f, 0.085e-3f) * max(0.0f, 1 - 0.5 * abs(height - 25) / 15);
 
-        vec3 sigmaS = sigma_R + sigma_mieS;
-        vec3 sigmaT = sigma_R + sigma_mieT + ozone;
+        // vec3 sigmaS = sigma_R + sigma_mieS;
+        // vec3 sigmaT = sigma_R + sigma_mieT + ozone;
 
-        vec3 eyeTrans = exp(-sumSigmaT - 0.5 * sigmaT);
+        // vec3 eyeTrans = exp(-sumSigmaT - 0.5 * sigmaT);
 
         // Attenuation of the light for both Rayleigh and Mie optical depth
         //  Mie extenction coeff. = 1.1 of the Mie scattering coeff.
@@ -183,7 +190,10 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
 }
 
 void main() {
-    vec3 acolor = computeSkyColor(normalize(fsPosition.xyz - c_cameraPosition), c_cameraPosition);
+    vec3 rayDir = worldPosition.xyz - c_cameraPosition;
+    // vec3 newCamPos = vec3(rayDir.x, rayDir.y + 6360.f, rayDir.z);
+    vec3 newCamPos = vec3(rayDir.x, rayDir.y, rayDir.z);
+    vec3 acolor = computeSkyColor(normalize(rayDir), c_cameraPosition);
 
     // Apply tone mapping
     acolor = mix(acolor, (1.0 - exp(-1.0 * acolor)), 1.0);
