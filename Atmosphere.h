@@ -20,7 +20,7 @@ public:
         int lightSamples = 8;
         float absorbMie = 4.4f;
         float  planetRadius = 6360;
-        float  atmosphereRadius = 100;
+        float  atmosphereRadius = 6460;
 
         float rayleighScaleHeight = 7.994f;
         float mieScaleHeight = 1.2f;
