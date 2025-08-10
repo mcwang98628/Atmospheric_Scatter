@@ -1,39 +1,58 @@
 #pragma once
-#include <glm/vec3.hpp>
+#include "stdafx.h"
+#include "GameObject.h"
+#include "engineMath.h"
 
-typedef struct Sun
+class Atmosphere : public GameObject
 {
-    glm::vec3 sunDir;
-    glm::vec3 I_sun;    // Intensity of the sun
-    float sunAngle;
-    
-}Sun;
+public:
+    Atmosphere();
+    ~Atmosphere();
 
-typedef struct Atmosphere
-{
-    // alignas(4) float R_e;      // Radius of the planet [m]
-    // alignas(4) float R_a;      // Radius of the atmosphere [m]
-    // alignas(16) glm::vec3  beta_R;   // Rayleigh scattering coefficient
-    // alignas(4) float beta_M;   // Mie scattering coefficient
-    // alignas(4) float H_R;      // Rayleigh scale height
-    // alignas(4) float H_M;      // Mie scale height
-    // alignas(4) float g;        // Mie scattering direction - 
-    //  - anisotropy of the medium
-    
-    
-    glm::vec3 scatterRayleigh = glm::vec3(5.8e-3f, 13.5e-3f, 33.1e-3f);
-    float scatterMie = 21e-3f;
-    
-    float  hDensityRayleigh = 8.f;
-    float hDensityMie  = 1.2f;
+    struct AtmosphereBuffer
+    {   
+        Vector3 SunIntensity = Vector3(20.f, 20.f, 20.f);    // Intensity of the sun
+        int viewSamples = 16;
+        
+        Vector3 scatterRayleigh = Vector3(5.8e-3f, 13.5e-3f, 33.1e-3f);
+        float scatterMie = 21e-3f;
 
-    float asymmetryMie = 0.8f;
-    
-    float  planetRadius = 6360;
-    float  atmosphereRadius = 6460;
+        int lightSamples = 8;
+        float absorbMie = 4.4f;
+        float  planetRadius = 6360;
+        float  atmosphereRadius = 6460;
 
-    glm::vec3 absorbOzone = glm::vec3(0.65f, 1.881f, 0.085f);
-    float  ozoneCenterHeight = 25;
+        float rayleighScaleHeight = 7.994f;
+        float mieScaleHeight = 1.2f;
+        float anisotropy = 0.888f;
+        float padding;
+    };
 
-    float  ozoneThickness = 30;
-}Atmosphere;
+    struct SunBuffer
+    {
+        Vector3 sunDir = Vector3(0.f, .707f, -.707f);
+        float padding;
+    };
+
+    void Update(float deltaTime) override;
+    void Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame) override;
+    void UpdateDescriptorSets() override;
+    void UpdateSun(float deltaSun);
+    void CreateUniformBuffers() override;
+
+
+private:
+    AtmosphereBuffer m_atmosphereBuffer;
+    SunBuffer m_sunBuffer;
+
+    float sunAngle = .785;
+
+    std::vector<VkBuffer>        atmosphereBuffer;
+    std::vector<VkDeviceMemory>  atmosphereBufferMemory;
+    std::vector<void*>           atmosphereBufferMapped;
+
+
+    std::vector<VkBuffer>        sunBuffer;
+    std::vector<VkDeviceMemory>  sunBufferMemory;
+    std::vector<void*>           sunBufferMapped;
+};
