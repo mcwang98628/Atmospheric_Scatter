@@ -130,7 +130,7 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
         float h_M = exp(-height / atmosphereConstants.mieScaleHeight) * segmentLen;
         optDepth_R += h_R;
         optDepth_M += h_M;
-        // segmentLen = 12.5, height = 0.9328, h_M = 5.744, h_R = 11.122
+        // segmentLen = 12.5, height =1.887, h_M = 5.744, h_R = 11.122
         //--------------------------------
         // Secondary - light ray
         float segmentLenLight = 
@@ -160,8 +160,6 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
             // Next light sample
             tCurrentLight += segmentLenLight;
         }
-        // TODO check sample above ground
-
         // vec3 sigma_R = atmosphereConstants.scatterRayleigh * h_R;
         // float mieDensity = h_M;
         // float sigma_mieS = atmosphereConstants.scatterMie  * mieDensity;
@@ -187,15 +185,13 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
         // sumSigmaT += deltaSumSigmaT;
     }
 
-//    return ubo.I_sun * (sum_R * ubo.beta_R * phase_R + sum_M * ubo.scatterMie * phase_M);
     return atmosphereConstants.sunIntensity * (sum_R * atmosphereConstants.scatterRayleigh * phase_R + sum_M * atmosphereConstants.scatterMie * phase_M);
 }
 
 void main() {
     vec3 rayDir = worldPosition.xyz - c_cameraPosition;
-    vec3 newCamPos = vec3(c_cameraPosition.x, c_cameraPosition.y + atmosphereConstants.planetRadius, c_cameraPosition.z);
-    // vec3 newCamPos = vec3(rayDir.x, rayDir.y, rayDir.z);
-    vec3 acolor = computeSkyColor(normalize(rayDir), newCamPos);
+    vec3 RayOriginPos = vec3(c_cameraPosition.x, atmosphereConstants.planetRadius, c_cameraPosition.z);
+    vec3 acolor = computeSkyColor(normalize(rayDir), RayOriginPos);
 
     // Apply tone mapping
     acolor = mix(acolor, (1.0 - exp(-1.0 * acolor)), 1.0);

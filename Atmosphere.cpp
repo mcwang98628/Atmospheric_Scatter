@@ -26,9 +26,9 @@ void Atmosphere::Update(float deltaTime)
 void Atmosphere::UpdateSun(float deltaSun) {
 	sunAngle += deltaSun;
 	if(sunAngle > Math::Pi){
-		sunAngle = Math::Pi;
-	} else if(sunAngle < 0.f){
-		sunAngle = 0.f;
+		sunAngle = std::fmod(sunAngle,Math::Pi);
+	} else if(sunAngle < -Math::Pi / 6.0f){
+		sunAngle = -Math::Pi / 6.0f;
 	}
 	m_sunBuffer.sunDir.y = sinf(sunAngle);
 	m_sunBuffer.sunDir.z = -cosf(sunAngle);
