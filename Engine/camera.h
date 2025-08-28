@@ -2,7 +2,6 @@
 
 #include "stdafx.h"
 #include "vulkanControl.h"
-#include "windowControl.h"
 #include "engineMath.h"
 
 class Camera {
@@ -16,7 +15,7 @@ public:
     float yaw = 0.0f;
     float pitch = 0.0f;
 
-    bool isPrinted = false;
+
     struct CameraBuffer {
         Matrix4 viewProjection;
         Vector3 cameraPosition;
@@ -55,4 +54,7 @@ private:
     bool firstMouse;
     float lastX;
     float lastY;
+
+    bool isPrinted = false;
+
 };

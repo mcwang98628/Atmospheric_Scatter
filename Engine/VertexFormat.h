@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "engineMath.h"
+#include <vulkan/vulkan.h>
 
 
 struct Vertex {

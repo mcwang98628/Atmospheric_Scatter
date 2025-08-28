@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Atmosphere.h"
+#include "vulkanControl.h"
 
 Atmosphere::Atmosphere():GameObject()
 {

@@ -1,4 +1,6 @@
-#include "stdafx.h"
+#pragma once
+#include <vector>
+#include <string>
 
 static class FileReader {
 public:

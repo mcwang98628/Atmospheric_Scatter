@@ -1,6 +1,37 @@
 #pragma once
+#include "Application/WinApplication.h"
+#include <vulkan/vulkan.h>
 
-#include "stdafx.h"
+
+
+#ifdef NDEBUG
+    const bool enableValidationLayers = false;
+#else
+    const bool enableValidationLayers = true;
+#endif
+
+const std::vector<const char*> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_KHR_MAINTENANCE1_EXTENSION_NAME
+};
+
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
+typedef struct QueueFamilyIndices{
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
+} QueueFamilyIndices;
+
+struct SwapChainSupportDetails{
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
 
 class VulkanControl {
 public:
@@ -12,7 +43,6 @@ public:
     }
 
     VkDevice GetDeviceContext() { return device; }
-
 
     VkInstance instance;
     VkSurfaceKHR surface;
@@ -81,8 +111,7 @@ public:
     void createDescriptorSets();
     void createCommandBuffers();
     void createSyncObjects();
-    void updateUniformBuffer(uint32_t currentImage);
-    void beginRenderPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void beginRenderPass(VkCommandBuffer commandBuffer);
     void endRenderPass(VkCommandBuffer commandBuffer);
     void recreateSwapChain(GLFWwindow* window);
     VkDescriptorSet getDescriptorSet(uint32_t frameIndex);
@@ -93,14 +122,24 @@ public:
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void SetViewportAndScissors(VkCommandBuffer commandBuffer);
 
+    void BeginRenderer();
+    void EndRenderer();
+    VkCommandBuffer GetCommandBuffer();
+    uint32_t GetCurrentFrameIndex();
+    void WaitIdle();
+
     ~VulkanControl();
 
 private:
 
+    bool framebufferResized = false;
+    uint32_t imageIndex;
+
     static VulkanControl* m_graphics;
 
     VkDebugUtilsMessengerEXT debugMessenger;
-    GLFWwindow* curWindow;
+
+    uint32_t currentFrame;
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     bool checkValidationLayerSupport();
