@@ -36,7 +36,7 @@ namespace StudyEngine {
         };
 
         void Update(float deltaTime) override;
-        void Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame) override;
+        void Draw() override;
         void UpdateDescriptorSets() override;
         void UpdateSun(float deltaSun);
         void CreateUniformBuffers() override;

@@ -31,7 +31,7 @@ namespace StudyEngine {
         void moveVertical(float velocity);
         void UpdateCameraTransform(float xoffset, float yoffset);
     
-        void updateCameraBuffer(uint32_t currentImage);
+        void updateCameraBuffer();
 
         void ProcessInput(double xoffset, double yoffset);
 

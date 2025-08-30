@@ -45,6 +45,16 @@ namespace StudyEngine {
         return true;
 	}
 
+    void Renderer::BeginRender()
+    {
+        VulkanControl::Get()->BeginRenderer();
+    }
+
+    void Renderer::EndRender()
+    {
+        VulkanControl::Get()->EndRenderer();
+    }
+
 	bool Renderer::ShutDown()
 	{
 		return false;

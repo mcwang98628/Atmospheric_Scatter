@@ -27,16 +27,18 @@ namespace StudyEngine {
 
     }
 
-    void GameObject::Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame)
+    void GameObject::Draw()
     {
+        VkCommandBuffer cmd = VulkanControl::Get()->GetCommandBuffer();
+        uint32_t frameInd = VulkanControl::Get()->GetCurrentFrameIndex();
         VkDeviceSize offsets = 0;
-        VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(currentFrame);
+        VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(frameInd);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanControl::Get()->getPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_vertexBuffer, &offsets);
-        vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(m_indices.size()), 1, 0, 0, 0);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanControl::Get()->getPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+        vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, &offsets);
+        vkCmdBindIndexBuffer(cmd, m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmd, static_cast<uint32_t>(m_indices.size()), 1, 0, 0, 0);
     }
 
 

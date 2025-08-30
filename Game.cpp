@@ -29,8 +29,14 @@ bool Game::Init()
     sky = new Atmosphere();
     terrain->LoadModel(TERRAIN_PATH);
     sky->LoadModel(SKY_PATH);
+    terrain->CreateVertexBuffer();
+    terrain->CreateIndexBuffer();
+
+    sky->CreateVertexBuffer();
+    sky->CreateIndexBuffer();
     terrain->BindGraphicPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv");
     sky->BindGraphicPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv");
+    camera = new Camera();
     BindInput();
     return true;
 }
@@ -96,15 +102,16 @@ bool Game::Init()
 
 void Game::Update(float deltaTime)
 {
+    WinApplication::Update();
+
     //const auto currTime = static_cast<float>(glfwGetTime());
     //deltaTime = currTime - lastFrame;
     //lastFrame = currTime;
 
-    //camera->updateCameraBuffer(VulkanControl::Get()->GetCurrentFrameIndex());
+    camera->updateCameraBuffer();
     //EngineCore::Update();
     //drawFrame();
     //processInput();
-
     //UpdateSun(deltaTime);
     // VulkanControl::Get()->WaitIdle();
 }
@@ -125,15 +132,17 @@ void Game::ShutDown()
 
 void Game::DrawFrame()
 {
+    Renderer::BeginRender();
     // VulkanControl* vulkanController = VulkanControl::Get();
     // vulkanController->BeginRenderer();
     //EngineCore::BeginFrame();
     
-    // sky->Draw(vulkanController->GetCommandBuffer(), vulkanController->GetCurrentFrameIndex());
-    // terrain->Draw(vulkanController->GetCommandBuffer(), vulkanController->GetCurrentFrameIndex());
+     sky->Draw();
+     terrain->Draw();
     // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline2, vulkanController->vertexBuffer2, vulkanController->indexBuffer2, indices2);  // Draw blue sky first (background)
     // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline1, vulkanController->vertexBuffer1, vulkanController->indexBuffer1, indices1);  // Draw green ground second (foreground)
     //EngineCore::EndFrame();
+     Renderer::EndRender();
 
     // vulkanController->EndRenderer();
 

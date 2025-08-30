@@ -7,19 +7,6 @@ namespace StudyEngine {
 
 	Camera::Camera()
 	{
-
-	}
-
-	Camera::~Camera()
-	{
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), cameraBuffer[i], nullptr);
-			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], nullptr);
-		}
-	}
-
-	void Camera::Init()
-	{
 		VkDeviceSize cameraSize = sizeof(CameraBuffer);
 
 		cameraBuffer.resize(MAX_FRAMES_IN_FLIGHT);
@@ -40,6 +27,19 @@ namespace StudyEngine {
 
 		worldToCamMatrix.Invert();
 		projectionMatrix = Matrix4::CreatePerspectiveFOV(fov, float(WIDTH), (float)HEIGHT, near, far);
+	}
+
+	Camera::~Camera()
+	{
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), cameraBuffer[i], nullptr);
+			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], nullptr);
+		}
+	}
+
+	void Camera::Init()
+	{
+
 	}
 
 	void Camera::moveForward(float velocity) {
@@ -142,8 +142,9 @@ namespace StudyEngine {
 
 	}
 
-	void Camera::updateCameraBuffer(uint32_t currentImage)
+	void Camera::updateCameraBuffer()
 	{
+		uint32_t frameIndex = VulkanControl::Get()->GetCurrentFrameIndex();
 		Matrix4 worldToCamMatrixInv = worldToCamMatrix;
 		worldToCamMatrixInv.Invert();
 		cameraData.cameraPosition = worldToCamMatrixInv.GetTranslation();
@@ -191,7 +192,7 @@ namespace StudyEngine {
 			hasPrinted = true;
 		}*/
 		// --- END DEBUG PRINT ---
-		memcpy(cameraBufferMapped[currentImage], &cameraData, sizeof(cameraData));
+		memcpy(cameraBufferMapped[frameIndex], &cameraData, sizeof(cameraData));
 	}
 
 

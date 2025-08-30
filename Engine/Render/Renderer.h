@@ -8,6 +8,10 @@ namespace StudyEngine {
         ~Renderer();
         static bool Init();
 
+        static void BeginRender();
+
+        static void EndRender();
+
         static bool ShutDown();
     };
 }

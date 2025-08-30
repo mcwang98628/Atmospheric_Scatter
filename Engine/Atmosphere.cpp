@@ -40,10 +40,12 @@ namespace StudyEngine {
 		m_sunBuffer.sunDir.Normalize();
 	}
 
-	void Atmosphere::Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame)
+	void Atmosphere::Draw()
 	{
-		memcpy(sunBufferMapped[currentFrame], &m_sunBuffer, sizeof(m_sunBuffer));
-		GameObject::Draw(commandBuffer, currentFrame);
+		VkCommandBuffer cmd = VulkanControl::Get()->GetCommandBuffer();
+		uint32_t frameInd = VulkanControl::Get()->GetCurrentFrameIndex();
+		memcpy(sunBufferMapped[frameInd], &m_sunBuffer, sizeof(m_sunBuffer));
+		GameObject::Draw();
 	}
 
 	void Atmosphere::UpdateDescriptorSets()

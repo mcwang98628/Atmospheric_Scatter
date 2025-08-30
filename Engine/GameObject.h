@@ -16,7 +16,7 @@ namespace StudyEngine {
         ~GameObject();
 
         virtual void Update(float deltaTime);
-        virtual void Draw(VkCommandBuffer commandBuffer, uint32_t currentFrame);
+        virtual void Draw();
 
         void LoadModel(std::string modelPath);
         void CreateVertexBuffer();
