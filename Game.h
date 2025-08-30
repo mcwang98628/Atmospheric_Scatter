@@ -2,12 +2,10 @@
 
 #include <string>
 #include <vector>
+#include "camera.h"
+#include "GameObject.h"
+#include "Atmosphere.h"
 #include "ApplicationInputHandler.h"
-
-
-class Camera;
-class GameObject;
-class Atmosphere;
 
 
 class Game {
@@ -21,22 +19,15 @@ public:
     bool Init();
     void Update(float deltaTime);
     void BindInput();
-    //static void ProcessMouseInput(GLFWwindow* win, double xposIn, double yposIn);
     void DrawFrame();
     void ShutDown();
-    void SetRunning(bool runningFlag) {*running = runningFlag;}
+    void SetRunning(bool &runningFlag) {running = &runningFlag;}
 
 private:
-    // uint32_t currentFrame = 0;
     bool* running;
-
 
     GameObject* terrain;
     Atmosphere* sky;
-
-    void initWindow();
-    void initVulkan();
-    void InitUserInput();
 
     ApplicationInputHandler inputHandler;
     /*bool hasStencilComponent(VkFormat format) {

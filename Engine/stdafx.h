@@ -19,6 +19,7 @@
 #include <fstream>
 #include <chrono>
 
+
 #define MOUSE_SENSITIVITY 0.1f
 #define ENABLE_MOUSE_CALLBACK true
 
@@ -29,3 +30,8 @@
 #define WIDTH 2560.f
 #define HEIGHT 1440.f
 
+#ifdef STUDY_ENGINE_EXPORTS
+#define STUDY_ENGINE __declspec(dllexport)
+#else
+#define STUDY_ENGINE __declspec(dllimport)
+#endif

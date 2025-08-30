@@ -2,38 +2,51 @@
 #include "WinApplication.h"
 #include <GLFW/glfw3.h>
 
+namespace StudyEngine {
+    // Static member definitions
+    GLFWwindow* WinApplication::window = nullptr;
+    WinApplication* WinApplication::m_windowApp = nullptr;
 
-// Static member definitions
-GLFWwindow* WinApplication::window = nullptr;
-WinApplication* WinApplication::m_windowApp = nullptr;
-
-void WinApplication::destroyWindow(GLFWwindow* window) {
-    glfwTerminate();
-
-    glfwDestroyWindow(window);
-}
-
-WinApplication::~WinApplication() {
-    if (window != nullptr) {
-        destroyWindow(window);
+    GLFWwindow* WinApplication::GetWindow()
+    {
+        return window;
     }
-}
 
-void WinApplication::Update()
-{
-    glfwPollEvents();
-}
+    void WinApplication::destroyWindow(GLFWwindow* window) {
+        glfwTerminate();
 
-void WinApplication::Init(void* appPointer)
-{
-    glfwInit();
+        glfwDestroyWindow(window);
+    }
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    WinApplication::~WinApplication() {
+        if (window != nullptr) {
+            destroyWindow(window);
+        }
+    }
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-    glfwSetWindowUserPointer(window, appPointer);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    WinApplication* WinApplication::Get()
+    {
+        return m_windowApp;
+    }
 
-    //glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    void WinApplication::Update()
+    {
+        glfwPollEvents();
+    }
 
-}
+    void WinApplication::Init(void* appPointer)
+    {
+        glfwInit();
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        glfwSetWindowUserPointer(window, appPointer);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+        //glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+
+    }
+};
+
+

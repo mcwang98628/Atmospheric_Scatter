@@ -1,12 +1,10 @@
 #include "Game.h"
-#include "Engine/EngineCore.h"
 
-//#include "Engine/camera.h"
-//#include "Engine/GameObject.h"
-//#include "Engine/Atmosphere.h"
-#include "Engine/Input/InputManager.h"
+#include "Input/InputManager.h"
+#include "Application/WinApplication.h"
+#include "Render/Renderer.h"
 
-
+using namespace StudyEngine;
 // settings
 const std::string TERRAIN_PATH = "models/Plane.obj";
 const std::string SKY_PATH = "models/sphere.obj";
@@ -14,6 +12,7 @@ const std::string SKY_PATH = "models/sphere.obj";
 
 Game::Game()
 {
+    running = new bool(false);
 }
 
 Game::~Game()
@@ -22,26 +21,29 @@ Game::~Game()
 
 bool Game::Init()
 {
-    //initWindow();
-    //initVulkan();
-    //InputManager::Instance()->Init();
-    if(!EngineCore::Initialize(this))
-    {
-        return false;
-    }
+    WinApplication::Init(this);
+    Renderer::Init();
+    InputManager::Init();
     
+    terrain = new GameObject();
+    sky = new Atmosphere();
+    terrain->LoadModel(TERRAIN_PATH);
+    sky->LoadModel(SKY_PATH);
+    terrain->BindGraphicPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv");
+    sky->BindGraphicPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv");
+    BindInput();
     return true;
 }
 
-void Game::initWindow()
-{
-    // WinApplication::Init(this);
-    //glfwSetScrollCallback(WindowControl::GetWindow(), scroll_callback);
+//void Game::initWindow()
+//{
+//    // WinApplication::Init(this);
+//    //glfwSetScrollCallback(WindowControl::GetWindow(), scroll_callback);
+//
+//}
 
-}
-
-void Game::initVulkan()
-{
+//void Game::initVulkan()
+//{
     //VulkanControl* vulkanController = VulkanControl::Get();
 
     //vulkanController->createInstance();
@@ -85,12 +87,12 @@ void Game::initVulkan()
     
     /*vulkanController->createCommandBuffers();
     vulkanController->createSyncObjects();*/
-}
+//}
 
-void Game::InitUserInput()
-{
-
-}
+//void Game::InitUserInput()
+//{
+//
+//}
 
 void Game::Update(float deltaTime)
 {
@@ -99,7 +101,7 @@ void Game::Update(float deltaTime)
     //lastFrame = currTime;
 
     //camera->updateCameraBuffer(VulkanControl::Get()->GetCurrentFrameIndex());
-    EngineCore::Update();
+    //EngineCore::Update();
     //drawFrame();
     //processInput();
 
@@ -110,7 +112,7 @@ void Game::Update(float deltaTime)
 void Game::ShutDown()
 {
     // VulkanControl::Get()->WaitIdle();
-    EngineCore::EndFrame();
+    //EngineCore::EndFrame();
     delete camera;
     // VulkanControl* vulkanController = VulkanControl::Get();
     // WinApplication* wd = WinApplication::Get();
@@ -118,20 +120,20 @@ void Game::ShutDown()
     delete sky;
     // vulkanController->cleanUp();
     // wd->destroyWindow(WinApplication::GetWindow());
-    EngineCore::Shutdown();
+    //EngineCore::Shutdown();
 }
 
 void Game::DrawFrame()
 {
     // VulkanControl* vulkanController = VulkanControl::Get();
     // vulkanController->BeginRenderer();
-    EngineCore::BeginFrame();
+    //EngineCore::BeginFrame();
     
     // sky->Draw(vulkanController->GetCommandBuffer(), vulkanController->GetCurrentFrameIndex());
     // terrain->Draw(vulkanController->GetCommandBuffer(), vulkanController->GetCurrentFrameIndex());
     // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline2, vulkanController->vertexBuffer2, vulkanController->indexBuffer2, indices2);  // Draw blue sky first (background)
     // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline1, vulkanController->vertexBuffer1, vulkanController->indexBuffer1, indices1);  // Draw green ground second (foreground)
-    EngineCore::EndFrame();
+    //EngineCore::EndFrame();
 
     // vulkanController->EndRenderer();
 
@@ -170,8 +172,8 @@ void Game::BindInput()
     });
     inputHandler.BindMouseMove([this](float xposIn, float yposIn) {
         camera->ProcessInput(xposIn, yposIn);
-    });
-    InputManager::Instance()->RegisterHandler(&inputHandler);*/
+    });*/
+    InputManager::RegisterHandler(&inputHandler);
     /*if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
         if (enableMouseCallback)

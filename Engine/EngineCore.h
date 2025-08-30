@@ -1,17 +1,14 @@
 #pragma once
-#ifdef ENGINE_EXPORTS
-#define ENGINE_API __declspec(dllexport)
-#else
-#define ENGINE_API __declspec(dllimport)
-#endif
+#include "stdafx.h"
+
 class EngineCore {
 public:
-    static  bool Initialize(void* gamePtr);
-    static ENGINE_API void Update();
+    static bool Initialize(void* gamePtr);
+    static void Update();
 
-    static ENGINE_API void BeginFrame();
-    static ENGINE_API void Render();
-    static ENGINE_API void EndFrame();
+    static void BeginFrame();
+    static void Render();
+    static void EndFrame();
 
-    static ENGINE_API void Shutdown();
+    static void Shutdown();
 };

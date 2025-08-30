@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-
+using namespace StudyEngine;
 class ApplicationInputHandler : public IInputEventHandler
 {
 private:
