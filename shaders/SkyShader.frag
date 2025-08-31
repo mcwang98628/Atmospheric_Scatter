@@ -190,7 +190,7 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
 
 void main() {
     vec3 rayDir = worldPosition.xyz - c_cameraPosition;
-    vec3 RayOriginPos = vec3(c_cameraPosition.x, atmosphereConstants.planetRadius, c_cameraPosition.z);
+    vec3 RayOriginPos = vec3(0, atmosphereConstants.planetRadius, 0);
     vec3 acolor = computeSkyColor(normalize(rayDir), RayOriginPos);
 
     // Apply tone mapping
