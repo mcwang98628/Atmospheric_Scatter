@@ -2,6 +2,7 @@
 // Math library mostly for vectors, matrices, and quaternions
 
 #pragma once
+#include <xmmintrin.h>
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 

@@ -1,54 +1,27 @@
 
-#include "stdafx.h"
 #include "Game.h"
+#include <chrono>
+#include <iostream>
 
-//#define MAX_LOADSTRING  100
-//
-//
-//WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-//WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-//
-//
-//HINSTANCE hInst;
 Game game;
-
-
-//bool InitInstance(HINSTANCE hInstance, int nCmdShow)
-//{
-//    hInst = hInstance; // Store instance handle in our global variable
-//
-//    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
-//        0, 0, WIDTH, HEIGHT, nullptr, nullptr, hInstance, nullptr);
-//
-//    if (!hWnd)
-//    {
-//        return FALSE;
-//    }
-//
-//    ShowWindow(hWnd, nCmdShow);
-//    UpdateWindow(hWnd);
-//
-//    game.Init(hWnd, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT);
-//
-//    return TRUE;
-//}
-
 
 int main() {
     bool running = true;
     if (!game.Init())
     {
-        
-
         return EXIT_FAILURE;
     }
+    game.SetRunning(running);
+    game.BindInput();
+    auto lastFrameTime = std::chrono::high_resolution_clock::now();
     while (running)
     {
+        std::chrono::high_resolution_clock::time_point currentFrameTime = std::chrono::high_resolution_clock::now();
+        double duration = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(currentFrameTime - lastFrameTime).count();
+        float deltaTime = (float)(0.000000001 * duration);
+        lastFrameTime = currentFrameTime;
         try {
-            if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
-                running = false;
-            game.ProcessInput();
-            game.Update();
+            game.Update(deltaTime);
             game.DrawFrame();
         }
         catch (const std::exception& e) {

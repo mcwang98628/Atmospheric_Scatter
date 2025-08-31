@@ -1,12 +1,11 @@
 #pragma once
 
-#include "stdafx.h"
-#include "camera.h"
 #include <string>
 #include <vector>
+#include "camera.h"
 #include "GameObject.h"
 #include "Atmosphere.h"
-
+#include "ApplicationInputHandler.h"
 
 
 class Game {
@@ -14,35 +13,26 @@ public:
     Game();
     ~Game();
 
-    static Camera* camera;
+    Camera* camera;
 
 
     bool Init();
-    void Update();
-    void ProcessInput();
-    static void ProcessMouseInput(GLFWwindow* win, double xposIn, double yposIn);
+    void Update(float deltaTime);
+    void BindInput();
     void DrawFrame();
     void ShutDown();
+    void SetRunning(bool &runningFlag) {running = &runningFlag;}
 
 private:
-    uint32_t currentFrame = 0;
-
-    bool framebufferResized = false;
+    bool* running;
 
     GameObject* terrain;
     Atmosphere* sky;
 
-    void initWindow();
-    void initVulkan();
-
-    static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<Game*>(glfwGetWindowUserPointer(window));
-        app->framebufferResized = true;
-    }
-
-    bool hasStencilComponent(VkFormat format) {
+    ApplicationInputHandler inputHandler;
+    /*bool hasStencilComponent(VkFormat format) {
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-    }
+    }*/
 
 
     //void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
