@@ -59,7 +59,7 @@ namespace StudyEngine {
         float speed = 25.f;
 
         bool isPrinted = false;
-        bool dirty = false;
+        bool dirty = true;
 
         float fov = 45.f;
         float near = 0.01;

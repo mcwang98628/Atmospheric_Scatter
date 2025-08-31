@@ -6,6 +6,7 @@
 namespace StudyEngine {
 	//InputManager* InputManager::m_inputManager = nullptr;
 	std::vector<IInputEventHandler*> InputManager::m_handlers = std::vector<IInputEventHandler*>();
+	std::unordered_map<int, bool> InputManager::m_keyStates = std::unordered_map<int, bool>();
 
 	void InputManager::Init()
 	{
@@ -26,8 +27,7 @@ namespace StudyEngine {
 
 	bool InputManager::IsKeyPressed(InputEvents key)
 	{
-		int glfwKey = ConvertEngineToGLFWKey(key);
-		return glfwGetKey(WinApplication::GetWindow(), glfwKey);
+		return m_keyStates[static_cast<int>(key)];
 	}
 
 	void InputManager::UnregisterHandler(IInputEventHandler* handler)
@@ -43,9 +43,11 @@ namespace StudyEngine {
 			{
 			case InputEventType::KeyPressed:
 				handler->OnKeyPressed(event.key.keyCode);
+				m_keyStates[event.key.keyCode] = true;
 				break;
 			case InputEventType::KeyReleased:
 				handler->OnKeyReleased(event.key.keyCode);
+				m_keyStates[event.key.keyCode] = false;
 				break;
 			case InputEventType::MouseMoved:
 				handler->OnMouseMoved(event.mouseMove.x, event.mouseMove.y);
