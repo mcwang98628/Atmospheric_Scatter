@@ -78,31 +78,31 @@ namespace StudyEngine {
 
 	void Camera::UpdateCameraTransform(float deltaTime)
 	{
-		if (movementInput.Length() == 0) return;
-
 		Matrix4 cameraWorldMatrix = worldToCamMatrix;
 		cameraWorldMatrix.Invert();
 
-		Vector3 forwardDir = cameraWorldMatrix.GetZAxis();
-		Vector3 rightDir = cameraWorldMatrix.GetXAxis();
-		Vector3 UpDir = cameraWorldMatrix.GetYAxis();
-
-		Vector3 worldMovement = UpDir * movementInput.y + rightDir * movementInput.x - forwardDir * movementInput.z;
-		worldMovement.Normalize();
-
 		Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
-		cameraPosition += worldMovement * speed * deltaTime;
-		// std::cout << "post cam pos: " << cameraPosition.x << " " << cameraPosition.y << " " << cameraPosition.z << std::endl;
-		// std::cout << "Delta time is: " << deltaTime << std::endl;
-		cameraWorldMatrix.mat[3][0] = cameraPosition.x;
-		cameraWorldMatrix.mat[3][1] = cameraPosition.y;
-		cameraWorldMatrix.mat[3][2] = cameraPosition.z;
 
-		worldToCamMatrix = cameraWorldMatrix;
-		worldToCamMatrix.Invert();
+		if (movementInput.Length() > 0)
+		{
+			Vector3 forwardDir = cameraWorldMatrix.GetZAxis();
+			Vector3 rightDir = cameraWorldMatrix.GetXAxis();
+			Vector3 UpDir = cameraWorldMatrix.GetYAxis();
 
+			Vector3 worldMovement = UpDir * movementInput.y + rightDir * movementInput.x - forwardDir * movementInput.z;
+			worldMovement.Normalize();
+
+			cameraPosition += worldMovement * speed * deltaTime;
+			// std::cout << "post cam pos: " << cameraPosition.x << " " << cameraPosition.y << " " << cameraPosition.z << std::endl;
+			// std::cout << "Delta time is: " << deltaTime << std::endl;
+			cameraWorldMatrix.mat[3][0] = cameraPosition.x;
+			cameraWorldMatrix.mat[3][1] = cameraPosition.y;
+			cameraWorldMatrix.mat[3][2] = cameraPosition.z;
+
+			worldToCamMatrix = cameraWorldMatrix;
+			worldToCamMatrix.Invert();
+		}
 		cameraData.cameraPosition = cameraPosition;
-
 		cameraData.viewProjection = projectionMatrix * worldToCamMatrix;
 		movementInput = Vector3(0, 0, 0);
 	}
@@ -164,7 +164,6 @@ namespace StudyEngine {
 
 	void Camera::UploadCameraBuffer()
 	{
-		if (!dirty) return;
 		memcpy(cameraBufferMapped[VulkanControl::Get()->GetCurrentFrameIndex()], &cameraData, sizeof(cameraData));
 	}
 

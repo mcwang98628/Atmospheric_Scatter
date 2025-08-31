@@ -33,6 +33,7 @@ namespace StudyEngine {
     private:
         //static InputManager* m_inputManager;
         static std::vector<IInputEventHandler*> m_handlers;
+        static std::unordered_map<int, bool> m_keyStates;
         static InputEvents ConvertGLFWKeyToEngineKey(int glfwkey);
         static int ConvertEngineToGLFWKey(InputEvents key);
 
