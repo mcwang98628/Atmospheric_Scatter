@@ -7,17 +7,19 @@ typedef struct VkBuffer_T* VkBuffer;
 typedef struct VkDeviceMemory_T* VkDeviceMemory;
 
 namespace StudyEngine {
+    enum CameraDirection {
+        FORWARD,
+        BACKWARD,
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
+    };
     class STUDY_ENGINE Camera {
     public:
+        
         Camera();
         ~Camera();
-
-        float fov = 45.f;
-        float near = 0.01;
-        float far = 2200.f;
-        float yaw = 0.0f;
-        float pitch = 0.0f;
-
 
         struct CameraBuffer {
             Matrix4 viewProjection;
@@ -25,21 +27,17 @@ namespace StudyEngine {
             float padding;
         };
 
-        void Init();
-        void moveForward(float velocity);
-        void moveHorizontal(float velocity);
-        void moveVertical(float velocity);
-        void UpdateCameraTransform(float xoffset, float yoffset);
+        void AddMovement(Vector3 dir);
+        void RotateCamera(float xoffset, float yoffset);
     
-        void updateCameraBuffer();
+        void UpdateCameraTransform(float dTime);
 
         void ProcessInput(double xoffset, double yoffset);
 
         void SetCamData(Vector3 position, Quaternion Rotation);
-
+        
+        void UploadCameraBuffer();
         void PrintCurrentCamMatrix();
-
-        // Descriptor management methods
 
     private:
         std::vector<VkBuffer>        cameraBuffer;
@@ -58,7 +56,17 @@ namespace StudyEngine {
         float lastX;
         float lastY;
 
-        bool isPrinted = false;
+        float speed = 25.f;
 
+        bool isPrinted = false;
+        bool dirty = false;
+
+        float fov = 45.f;
+        float near = 0.01;
+        float far = 2200.f;
+        float yaw = 0.0f;
+        float pitch = 0.0f;
+
+        Vector3 movementInput = Vector3(0.f, 0.f, 0.f);
     };
 }

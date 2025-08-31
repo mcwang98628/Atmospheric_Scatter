@@ -37,63 +37,13 @@ namespace StudyEngine {
 		}
 	}
 
-	void Camera::Init()
+	void Camera::AddMovement(Vector3 dir)
 	{
-
+		movementInput += dir;
+		dirty = true;
 	}
 
-	void Camera::moveForward(float velocity) {
-		Matrix4 cameraWorldMatrix = worldToCamMatrix;
-		cameraWorldMatrix.Invert();
-
-		Vector3 forwardDir = cameraWorldMatrix.GetZAxis();
-
-		Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
-		cameraPosition -= velocity * forwardDir;
-
-		cameraWorldMatrix.mat[3][0] = cameraPosition.x;
-		cameraWorldMatrix.mat[3][1] = cameraPosition.y;
-		cameraWorldMatrix.mat[3][2] = cameraPosition.z;
-
-		worldToCamMatrix = cameraWorldMatrix;
-		worldToCamMatrix.Invert();
-	}
-
-	void Camera::moveHorizontal(float velocity) {
-		Matrix4 cameraWorldMatrix = worldToCamMatrix;
-		cameraWorldMatrix.Invert();
-
-		Vector3 rightDir = cameraWorldMatrix.GetXAxis();
-
-		Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
-		cameraPosition += velocity * rightDir;
-
-		cameraWorldMatrix.mat[3][0] = cameraPosition.x;
-		cameraWorldMatrix.mat[3][1] = cameraPosition.y;
-		cameraWorldMatrix.mat[3][2] = cameraPosition.z;
-
-		worldToCamMatrix = cameraWorldMatrix;
-		worldToCamMatrix.Invert();
-	}
-
-	void Camera::moveVertical(float velocity) {
-		Matrix4 cameraWorldMatrix = worldToCamMatrix;
-		cameraWorldMatrix.Invert();
-
-		Vector3 forwardDir = cameraWorldMatrix.GetYAxis();
-
-		Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
-		cameraPosition += velocity * forwardDir;
-
-		cameraWorldMatrix.mat[3][0] = cameraPosition.x;
-		cameraWorldMatrix.mat[3][1] = cameraPosition.y;
-		cameraWorldMatrix.mat[3][2] = cameraPosition.z;
-
-		worldToCamMatrix = cameraWorldMatrix;
-		worldToCamMatrix.Invert();
-	}
-
-	void Camera::UpdateCameraTransform(float xoffset, float yoffset)
+	void Camera::RotateCamera(float xoffset, float yoffset)
 	{
 		yaw += xoffset;
 		pitch += yoffset;
@@ -105,8 +55,8 @@ namespace StudyEngine {
 			yaw = 180.f;
 		if (yaw < -180.0f)
 			yaw = -180.f;
-		/*std::cout << "new Yaw" << yaw << std::endl;
-		std::cout << "new pitch" << pitch << std::endl;*/
+		//std::cout << "new Yaw" << yaw << std::endl;
+		//std::cout << "new pitch" << pitch << std::endl;
 		Vector3 newFront;
 		newFront.x = -sinf(Math::ToRadians(yaw)) * cosf(Math::ToRadians(pitch));
 		newFront.y = -sinf(Math::ToRadians(pitch));
@@ -114,91 +64,52 @@ namespace StudyEngine {
 		newFront.Normalize();
 		Matrix4 camToWorldMat = worldToCamMatrix;
 		camToWorldMat.Invert();
-		/*std::cout << "My camToWorldMat Before:" << std::endl;
-		for (int row = 0; row < 4; row++) {
-			for (int col = 0; col < 4; col++) {
-				std::cout << camToWorldMat.mat[col][row] << "\t";
-			}
-			std::cout << std::endl;
-		}*/
+
 		Vector3 worldUp = Vector3(0.f, 1.f, 0.f);
 		Vector3 newRight = Vector3::Cross(newFront, worldUp);
 		Vector3 newUp = Vector3::Cross(newRight, newFront);
 
-		//Vector3 curTranslation = camToWorldMat.GetTranslation();
-		//std::cout << "My cam Translation before is:" << std::endl;
-		//std::cout << curTranslation.x << "\t" << curTranslation.y << "\t" << curTranslation.z << "\t";
-		//std::cout << std::endl;
 		Matrix4 newLookatMat = Matrix4::CreateLookAt(camToWorldMat.GetTranslation(), camToWorldMat.GetTranslation() + newFront, newUp);
-		/*std::cout << "My camToWorldMat After:" << std::endl;
-		for (int row = 0; row < 4; row++) {
-			for (int col = 0; col < 4; col++) {
-				std::cout << newLookatMat.mat[col][row] << "\t";
-			}
-			std::cout << std::endl;
-		}*/
+
 		newLookatMat.Invert();
 		worldToCamMatrix = newLookatMat;
-
+		dirty = true;
 	}
 
-	void Camera::updateCameraBuffer()
+	void Camera::UpdateCameraTransform(float deltaTime)
 	{
-		uint32_t frameIndex = VulkanControl::Get()->GetCurrentFrameIndex();
-		Matrix4 worldToCamMatrixInv = worldToCamMatrix;
-		worldToCamMatrixInv.Invert();
-		cameraData.cameraPosition = worldToCamMatrixInv.GetTranslation();
+		if (movementInput.Length() == 0) return;
+
+		Matrix4 cameraWorldMatrix = worldToCamMatrix;
+		cameraWorldMatrix.Invert();
+
+		Vector3 forwardDir = cameraWorldMatrix.GetZAxis();
+		Vector3 rightDir = cameraWorldMatrix.GetXAxis();
+		Vector3 UpDir = cameraWorldMatrix.GetYAxis();
+
+		Vector3 worldMovement = UpDir * movementInput.y + rightDir * movementInput.x - forwardDir * movementInput.z;
+		worldMovement.Normalize();
+
+		Vector3 cameraPosition = cameraWorldMatrix.GetTranslation();
+		cameraPosition += worldMovement * speed * deltaTime;
+		// std::cout << "post cam pos: " << cameraPosition.x << " " << cameraPosition.y << " " << cameraPosition.z << std::endl;
+		// std::cout << "Delta time is: " << deltaTime << std::endl;
+		cameraWorldMatrix.mat[3][0] = cameraPosition.x;
+		cameraWorldMatrix.mat[3][1] = cameraPosition.y;
+		cameraWorldMatrix.mat[3][2] = cameraPosition.z;
+
+		worldToCamMatrix = cameraWorldMatrix;
+		worldToCamMatrix.Invert();
+
+		cameraData.cameraPosition = cameraPosition;
 
 		cameraData.viewProjection = projectionMatrix * worldToCamMatrix;
-
-		// --- DEBUG PRINT ---
-	// This will print the matrices and a test coordinate calculation ONCE.
-		static bool hasPrinted = false;
-		/*if (!hasPrinted)
-		{
-			std::cout << std::endl << "--- DEBUG ---" << std::endl;
-
-			std::cout << "Camera World Position: "
-				<< cameraData.cameraPosition.x << ", "
-				<< cameraData.cameraPosition.y << ", "
-				<< cameraData.cameraPosition.z << std::endl << std::endl;
-
-			std::cout << "My View Matrix (worldToCamMatrix):" << std::endl;
-			for (int row = 0; row < 4; row++) {
-				for (int col = 0; col < 4; col++) {
-					std::cout << worldToCamMatrix.mat[col][row] << "\t";
-				}
-				std::cout << std::endl;
-			}
-			std::cout << std::endl;
-
-			std::cout << "My Projection Matrix:" << std::endl;
-			for (int row = 0; row < 4; row++) {
-				for (int col = 0; col < 4; col++) {
-					std::cout << projectionMatrix.mat[col][row] << "\t";
-				}
-				std::cout << std::endl;
-			}
-			std::cout << std::endl;
-
-			Vector4 oneVertexCoord = Vector4(-20.f, 0.f, -20.f, 1.f);
-			Vector4 oneCustomResult = cameraData.viewProjection * oneVertexCoord;
-
-			std::cout << "my coordinate result is: "
-				<< oneCustomResult.x << " " << oneCustomResult.y << " "
-				<< oneCustomResult.z << " " << oneCustomResult.w << std::endl;
-
-			std::cout << "--- END DEBUG ---" << std::endl << std::endl;
-			hasPrinted = true;
-		}*/
-		// --- END DEBUG PRINT ---
-		memcpy(cameraBufferMapped[frameIndex], &cameraData, sizeof(cameraData));
+		movementInput = Vector3(0, 0, 0);
 	}
 
 
 	void Camera::updateDescriptorSets()
 	{
-
 		std::vector<VkWriteDescriptorSet> descriptorWrites(2);
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(i);
@@ -220,18 +131,6 @@ namespace StudyEngine {
 		}
 	}
 
-	//VkDescriptorSetLayoutBinding Camera::getCameraDescriptorLayoutBinding()
-	//{
-	//	VkDescriptorSetLayoutBinding cameraBinding{};
-	//	cameraBinding.binding            = 0;
-	//	cameraBinding.descriptorCount    = 1;
-	//	cameraBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//	cameraBinding.pImmutableSamplers = nullptr;
-	//	cameraBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	//	
-	//	return cameraBinding;
-	//}
-
 	void Camera::ProcessInput(double xposIn, double yposIn)
 	{
 		float xpos = static_cast<float>(xposIn);
@@ -249,7 +148,7 @@ namespace StudyEngine {
 		lastX = xpos;
 		lastY = ypos;
 
-		UpdateCameraTransform(xoffset, yoffset);
+		RotateCamera(xoffset, yoffset);
 	}
 
 
@@ -260,6 +159,13 @@ namespace StudyEngine {
 
 		worldToCamMatrix = rotMat * transMat;
 		worldToCamMatrix.Invert();
+		dirty = true;
+	}
+
+	void Camera::UploadCameraBuffer()
+	{
+		if (!dirty) return;
+		memcpy(cameraBufferMapped[VulkanControl::Get()->GetCurrentFrameIndex()], &cameraData, sizeof(cameraData));
 	}
 
 	void Camera::PrintCurrentCamMatrix()

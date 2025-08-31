@@ -57,6 +57,7 @@ namespace StudyEngine {
 
 	bool Renderer::ShutDown()
 	{
+        VulkanControl::Get()->cleanUp();
 		return false;
 	}
 

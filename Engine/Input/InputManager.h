@@ -14,6 +14,7 @@ namespace StudyEngine {
         static void UnregisterHandler(IInputEventHandler* handler);
         static void ProcessEvents(const InputEvent& event);
 
+        static bool IsKeyPressed(InputEvents key);
         //static InputManager* Instance()
         //{
         //    if (!m_inputManager)
@@ -33,5 +34,7 @@ namespace StudyEngine {
         //static InputManager* m_inputManager;
         static std::vector<IInputEventHandler*> m_handlers;
         static InputEvents ConvertGLFWKeyToEngineKey(int glfwkey);
+        static int ConvertEngineToGLFWKey(InputEvents key);
+
     };
 };

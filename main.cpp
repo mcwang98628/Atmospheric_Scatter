@@ -13,18 +13,14 @@ int main() {
     }
     game.SetRunning(running);
     game.BindInput();
+    auto lastFrameTime = std::chrono::high_resolution_clock::now();
     while (running)
     {
-        float deltaTime = 0;
-        std::chrono::high_resolution_clock::time_point frameEnd;
-        std::chrono::high_resolution_clock::time_point frameStart = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point currentFrameTime = std::chrono::high_resolution_clock::now();
+        double duration = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(currentFrameTime - lastFrameTime).count();
+        float deltaTime = (float)(0.000000001 * duration);
+        lastFrameTime = currentFrameTime;
         try {
-            frameEnd = std::chrono::high_resolution_clock::now();
-            double duration = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(frameEnd - frameStart).count();
-            deltaTime = (float)(0.000000001 * duration);
-
-            // game.ProcessInput();
-            frameStart = frameEnd;
             game.Update(deltaTime);
             game.DrawFrame();
         }

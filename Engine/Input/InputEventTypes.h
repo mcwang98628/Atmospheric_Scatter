@@ -15,9 +15,9 @@ namespace StudyEngine {
     };
 
     enum class InputEventType {
-        KeyPressed, KeyReleased,
-        MousePressed, MouseReleased, MouseMoved,
-        MouseScrolled
+        KeyPressed = 0, KeyReleased = 1,
+        MousePressed = 2, MouseReleased = 3, MouseMoved = 4,
+        MouseScrolled = 5
     };
 
     struct InputEvent {

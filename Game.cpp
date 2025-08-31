@@ -103,14 +103,31 @@ bool Game::Init()
 void Game::Update(float deltaTime)
 {
     WinApplication::Update();
-
-    //const auto currTime = static_cast<float>(glfwGetTime());
-    //deltaTime = currTime - lastFrame;
-    //lastFrame = currTime;
-
-    camera->updateCameraBuffer();
-    //EngineCore::Update();
-    //drawFrame();
+    if (InputManager::IsKeyPressed(InputEvents::Key_W))
+    {
+        camera->AddMovement(Vector3(0, 0, 1));
+    }
+    if (InputManager::IsKeyPressed(InputEvents::Key_S))
+    {
+        camera->AddMovement(Vector3(0, 0, -1));
+    }
+    if (InputManager::IsKeyPressed(InputEvents::Key_A))
+    {
+        camera->AddMovement(Vector3(-1, 0, 0));
+    }
+    if (InputManager::IsKeyPressed(InputEvents::Key_D))
+    {
+        camera->AddMovement(Vector3(1, 0, 0));
+    }
+    if (InputManager::IsKeyPressed(InputEvents::Key_UP))
+    {
+        sky->UpdateSun(0.01f);
+    }
+    if (InputManager::IsKeyPressed(InputEvents::Key_DOWN))
+    {
+        sky->UpdateSun(-0.01f);
+    }
+    camera->UpdateCameraTransform(deltaTime);
     //processInput();
     //UpdateSun(deltaTime);
     // VulkanControl::Get()->WaitIdle();
@@ -136,9 +153,9 @@ void Game::DrawFrame()
     // VulkanControl* vulkanController = VulkanControl::Get();
     // vulkanController->BeginRenderer();
     //EngineCore::BeginFrame();
-    
-     sky->Draw();
-     terrain->Draw();
+    camera->UploadCameraBuffer();
+    sky->Draw();
+    terrain->Draw();
     // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline2, vulkanController->vertexBuffer2, vulkanController->indexBuffer2, indices2);  // Draw blue sky first (background)
     // vulkanController->recordCommandBuffer(vulkanController->commandBuffers[currentFrame], imageIndex, currentFrame, vulkanController->graphicsPipeline1, vulkanController->vertexBuffer1, vulkanController->indexBuffer1, indices1);  // Draw green ground second (foreground)
     //EngineCore::EndFrame();
@@ -154,34 +171,33 @@ void Game::BindInput()
         if (running) { *running = false; }
     });
 
-    float cameraSpeed = 25.f;
+    //inputHandler.BindKey(InputEvents::Key_W, [this]() {
+    //    camera->AddMovement(Vector3(0, 0, 1));
+    //});
 
-   /* inputHandler.BindKey(InputEvents::Key_W, [this, cameraSpeed]() {
-        camera->moveForward(cameraSpeed);
-    });
+    //inputHandler.BindKey(InputEvents::Key_S, [this]() {
+    //    camera->AddMovement(Vector3(0, 0, -1));
+    //});
 
-    inputHandler.BindKey(InputEvents::Key_S, [this, cameraSpeed]() {
-        camera->moveForward(-cameraSpeed);
-    });
-
-    inputHandler.BindKey(InputEvents::Key_A, [this, cameraSpeed]() {
-        camera->moveForward(-cameraSpeed);
-    });
-    inputHandler.BindKey(InputEvents::Key_D, [this, cameraSpeed]() {
-        camera->moveForward(-cameraSpeed);
-    });
-    inputHandler.BindKey(InputEvents::Key_UP, [this]() {
-        sky->UpdateSun(0.01f);
-    });
-    inputHandler.BindKey(InputEvents::Key_DOWN, [this]() {
-        sky->UpdateSun(-.01f);
-    });
+    //inputHandler.BindKey(InputEvents::Key_A, [this]() {
+    //    camera->AddMovement(Vector3(-1, 0, 0));
+    //});
+    //inputHandler.BindKey(InputEvents::Key_D, [this]() {
+    //    camera->AddMovement(Vector3(1, 0, 0));
+    //});
+    //inputHandler.BindKey(InputEvents::Key_UP, [this]() {
+    //    sky->UpdateSun(0.01f);
+    //});
+    //inputHandler.BindKey(InputEvents::Key_DOWN, [this]() {
+    //    sky->UpdateSun(-.01f);
+    //});
     inputHandler.BindKey(InputEvents::Key_F, [this]() {
         camera->PrintCurrentCamMatrix();
     });
     inputHandler.BindMouseMove([this](float xposIn, float yposIn) {
+
         camera->ProcessInput(xposIn, yposIn);
-    });*/
+    });
     InputManager::RegisterHandler(&inputHandler);
     /*if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
@@ -195,29 +211,4 @@ void Game::BindInput()
             enableMouseCallback = true;
         }
     }*/
-
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_W) == GLFW_PRESS)
-    //     camera->moveForward(cameraSpeed);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_S) == GLFW_PRESS)
-    //     camera->moveForward(-cameraSpeed);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_A) == GLFW_PRESS)
-    //     camera->moveHorizontal(-cameraSpeed);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_D) == GLFW_PRESS)
-    //     camera->moveHorizontal(cameraSpeed);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_Q) == GLFW_PRESS)
-    //     camera->moveVertical(-cameraSpeed);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_E) == GLFW_PRESS)
-    //     camera->moveVertical(cameraSpeed);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_UP) == GLFW_PRESS)
-    //     sky->UpdateSun(0.01f);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_DOWN) == GLFW_PRESS)
-    //     sky->UpdateSun(-.01f);
-    // if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_F) == GLFW_PRESS)
-    //     camera->PrintCurrentCamMatrix();
 }
-
-//void Game::ProcessMouseInput(GLFWwindow* win, double xposIn, double yposIn)
-//{
-//    if (ENABLE_MOUSE_CALLBACK)
-//        camera->ProcessInput(xposIn, yposIn);
-//}

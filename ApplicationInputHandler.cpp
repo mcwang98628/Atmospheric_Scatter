@@ -1,4 +1,5 @@
 #include "ApplicationInputHandler.h"
+#include <iostream>
 
 void ApplicationInputHandler::BindKey(InputEvents keyCode, std::function<void()> callback)
 {
@@ -17,6 +18,9 @@ bool ApplicationInputHandler::OnKeyPressed(int keyCode)
         it->second();
         return true;
     }
+    // } else {
+    //     std::cout << "Not some key pressed"<<  keyCode << std::endl;
+    // }
     return false;
 }
 

@@ -24,6 +24,12 @@ namespace StudyEngine {
 		m_handlers.push_back(handler);
 	}
 
+	bool InputManager::IsKeyPressed(InputEvents key)
+	{
+		int glfwKey = ConvertEngineToGLFWKey(key);
+		return glfwGetKey(WinApplication::GetWindow(), glfwKey);
+	}
+
 	void InputManager::UnregisterHandler(IInputEventHandler* handler)
 	{
 		m_handlers.erase(std::remove(m_handlers.begin(), m_handlers.end(), handler), m_handlers.end());
@@ -33,7 +39,6 @@ namespace StudyEngine {
 	{
 		for (auto handler : m_handlers)
 		{
-			bool comsumed = false;
 			switch (event.type)
 			{
 			case InputEventType::KeyPressed:
@@ -43,7 +48,7 @@ namespace StudyEngine {
 				handler->OnKeyReleased(event.key.keyCode);
 				break;
 			case InputEventType::MouseMoved:
-				handler->OnMouseMoved(event.mouse.x, event.mouse.y);
+				handler->OnMouseMoved(event.mouseMove.x, event.mouseMove.y);
 				break;
 			case InputEventType::MousePressed:
 				handler->OnMousePressed(event.mouse.button, event.mouse.x, event.mouse.y);
@@ -63,7 +68,7 @@ namespace StudyEngine {
 	void InputManager::GLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
 		InputEvent evt;
-		evt.type = (action == GLFW_PRESS) ? InputEventType::KeyPressed : InputEventType::KeyReleased;
+		evt.type = (action == GLFW_PRESS || action == GLFW_REPEAT) ? InputEventType::KeyPressed : InputEventType::KeyReleased;
 		evt.key.keyCode = static_cast<int>(ConvertGLFWKeyToEngineKey(key));
 		ProcessEvents(evt);
 	}
@@ -71,7 +76,7 @@ namespace StudyEngine {
 	void InputManager::GLFWMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 	{
 		InputEvent evt;
-		evt.type = (action == GLFW_PRESS) ? InputEventType::MousePressed : InputEventType::MouseReleased;
+		evt.type = (action == GLFW_PRESS || action == GLFW_REPEAT) ? InputEventType::MousePressed : InputEventType::MouseReleased;
 		evt.mouse.button = button;
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
@@ -88,7 +93,6 @@ namespace StudyEngine {
 		//glfwGetCursorPos(window, &xpos, &ypos);
 		evt.mouseMove.x = static_cast<float>(xpos);
 		evt.mouseMove.y = static_cast<float>(ypos);
-
 		ProcessEvents(evt);
 	}
 
@@ -140,9 +144,40 @@ namespace StudyEngine {
 		case GLFW_KEY_E:
 			return InputEvents::Key_E;
 			break;
+		case GLFW_KEY_F:
+			return InputEvents::Key_F;
+			break;
 		default:
+			 std::cout << "Unknown key" << glfwkey << std::endl;
 			return InputEvents::UNKNOWN;
 		}
 		return InputEvents::UNKNOWN;
+	}
+	int InputManager::ConvertEngineToGLFWKey(InputEvents key)
+	{
+		switch (key)
+		{
+		case InputEvents::Key_W:
+			return GLFW_KEY_W;
+			break;
+		case InputEvents::Key_S:
+			return GLFW_KEY_S;
+			break;
+		case InputEvents::Key_A:
+			return GLFW_KEY_A;
+			break;
+		case InputEvents::Key_D:
+			return GLFW_KEY_D;
+			break;
+		case InputEvents::Key_UP:
+			return GLFW_KEY_UP;
+			break;
+		case InputEvents::Key_DOWN:
+			return GLFW_KEY_DOWN;
+			break;
+		default:
+			return -1;
+		}
+		return -1;
 	}
 };
