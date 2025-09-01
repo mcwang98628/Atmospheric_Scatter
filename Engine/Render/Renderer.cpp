@@ -55,7 +55,12 @@ namespace StudyEngine {
         VulkanControl::Get()->EndRenderer();
     }
 
-	bool Renderer::ShutDown()
+    void Renderer::PreShutDown()
+    {
+        VulkanControl::Get()->WaitIdle();
+    }
+
+    bool Renderer::ShutDown()
 	{
         VulkanControl::Get()->cleanUp();
 		return false;

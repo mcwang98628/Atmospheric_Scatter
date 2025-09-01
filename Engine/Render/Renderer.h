@@ -12,6 +12,7 @@ namespace StudyEngine {
 
         static void EndRender();
 
+        static void PreShutDown();
         static bool ShutDown();
     };
 }
