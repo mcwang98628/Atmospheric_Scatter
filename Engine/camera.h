@@ -2,9 +2,8 @@
 
 #include "stdafx.h"
 #include "engineMath.h"
+#include "Render/Vulkan/VulkanUniformBuffer.h"
 
-typedef struct VkBuffer_T* VkBuffer;
-typedef struct VkDeviceMemory_T* VkDeviceMemory;
 
 namespace StudyEngine {
     enum CameraDirection {
@@ -40,9 +39,7 @@ namespace StudyEngine {
         void PrintCurrentCamMatrix();
 
     private:
-        std::vector<VkBuffer>        cameraBuffer;
-        std::vector<VkDeviceMemory>  cameraBufferMemory;
-        std::vector<void*>           cameraBufferMapped;
+        std::vector<VulkanUniformBuffer*>        cameraBuffer;
     
         void updateDescriptorSets();
 
@@ -59,7 +56,6 @@ namespace StudyEngine {
         float speed = 25.f;
 
         bool isPrinted = false;
-        bool dirty = true;
 
         float fov = 45.f;
         float near = 0.01;

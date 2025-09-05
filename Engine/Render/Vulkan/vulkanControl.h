@@ -79,7 +79,6 @@ namespace StudyEngine {
         VkSampler textureSampler;
 
         VkDescriptorPool descriptorPool;
-        std::vector<VkDescriptorSet> descriptorSets;
 
         std::vector<VkCommandBuffer> commandBuffers;
 
@@ -109,13 +108,12 @@ namespace StudyEngine {
         void createTextureImageView();
         void createTextureSampler();
         void createDescriptorPool();
-        void createDescriptorSets();
         void createCommandBuffers();
         void createSyncObjects();
         void beginRenderPass(VkCommandBuffer commandBuffer);
         void endRenderPass(VkCommandBuffer commandBuffer);
         void recreateSwapChain(GLFWwindow* window);
-        VkDescriptorSet getDescriptorSet(uint32_t frameIndex);
+        //VkDescriptorSet getDescriptorSet(uint32_t frameIndex);
         VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
         void cleanUp();
 
@@ -130,7 +128,6 @@ namespace StudyEngine {
         void WaitIdle();
 
         ~VulkanControl();
-
     private:
 
         bool framebufferResized = false;
@@ -163,7 +160,6 @@ namespace StudyEngine {
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
         VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
         static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
-        void executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> indices);
         void SubmitCommands();
         void PresentFrame();
     };

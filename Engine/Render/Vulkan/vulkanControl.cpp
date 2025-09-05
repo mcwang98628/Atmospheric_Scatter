@@ -655,13 +655,6 @@ namespace StudyEngine {
         endSingleTimeCommands(commandBuffer);
     }
 
-    VkDescriptorSet VulkanControl::getDescriptorSet(uint32_t frameIndex) {
-        if (frameIndex < descriptorSets.size()) {
-            return descriptorSets[frameIndex];
-        }
-        return VK_NULL_HANDLE;
-    }
-
     void VulkanControl::createDescriptorPool() {
         std::array<VkDescriptorPoolSize, 2> poolSizes{};
         poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -677,43 +670,6 @@ namespace StudyEngine {
 
         if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor pool!");
-        }
-    }
-
-    void VulkanControl::createDescriptorSets() {
-        std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
-        VkDescriptorSetAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = descriptorPool;
-        allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-        allocInfo.pSetLayouts = layouts.data();
-
-        descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-        if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate descriptor sets!");
-        }
-
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-
-
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = textureImageView;
-            imageInfo.sampler = textureSampler;
-
-            VkWriteDescriptorSet descriptorWrites{};
-
-    
-
-            descriptorWrites.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites.dstSet = descriptorSets[i];
-            descriptorWrites.dstBinding = 3;
-            descriptorWrites.dstArrayElement = 0;
-            descriptorWrites.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrites.descriptorCount = 1;
-            descriptorWrites.pImageInfo = &imageInfo;
-
-            vkUpdateDescriptorSets(device, 1, &descriptorWrites, 0, nullptr);
         }
     }
 
@@ -977,22 +933,22 @@ namespace StudyEngine {
         return VK_FALSE;
     }
 
-    void VulkanControl::executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> indices)
-    {
-        VkBuffer vertexBuffers[] = { vBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    // void VulkanControl::executeDrawCommand(VkCommandBuffer commandBuffer, VkPipeline pipeline, VkBuffer vBuffer, VkBuffer iBuffer, std::vector<uint32_t> indices)
+    // {
+    //     VkBuffer vertexBuffers[] = { vBuffer };
+    //     VkDeviceSize offsets[] = { 0 };
+    //     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-        if (iBuffer != NULL) {
-            vkCmdBindIndexBuffer(commandBuffer, iBuffer, 0, VK_INDEX_TYPE_UINT32);
-        }
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[0], 0, nullptr);
+    //     if (iBuffer != NULL) {
+    //         vkCmdBindIndexBuffer(commandBuffer, iBuffer, 0, VK_INDEX_TYPE_UINT32);
+    //     }
+    //     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    //     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[0], 0, nullptr);
 
-        if (!indices.empty()) {
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-        }
-    }
+    //     if (!indices.empty()) {
+    //         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+    //     }
+    // }
 
     void VulkanControl::SubmitCommands()
     {

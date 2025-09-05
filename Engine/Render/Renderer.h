@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include "Vulkan/VulkanDescriptorSet.h"
 
 namespace StudyEngine {
     class STUDY_ENGINE Renderer {
@@ -14,5 +15,9 @@ namespace StudyEngine {
 
         static void PreShutDown();
         static bool ShutDown();
+
+        static VulkanDescriptorSet* GetCurrentDescriptorSet();
+    private:
+        static VulkanDescriptorSet* m_descriptorSets;
     };
 }

@@ -18,6 +18,7 @@
 #include <string>
 #include <fstream>
 #include <chrono>
+#include <memory>
 
 
 #define MOUSE_SENSITIVITY 0.1f

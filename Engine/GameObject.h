@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Render/Vulkan/VertexFormat.h"
+#include "Render/Vulkan/VulkanBuffer.h"
 
-typedef struct VkBuffer_T* VkBuffer;
 typedef struct VkDeviceMemory_T* VkDeviceMemory;
 typedef struct VkDescriptorSet_T* VkDescriptorSet;
 typedef struct VkCommandBuffer_T* VkCommandBuffer;
@@ -19,14 +19,14 @@ namespace StudyEngine {
         virtual void Draw();
 
         void LoadModel(std::string modelPath);
-        void CreateVertexBuffer();
-        void CreateIndexBuffer();
-
 
         /* virtual void CreateUniformBuffers();*/
         virtual void UpdateDescriptorSets();
         virtual void BindGraphicPipeline(std::string vertShaderPath, std::string fragShaderPath);
         virtual void CreateUniformBuffers();
+        virtual void DrawIndexed();
+
+
 
         struct RenderData {
             Matrix4 m_transform;
@@ -34,9 +34,9 @@ namespace StudyEngine {
 
     private:
         VkPipeline m_pipeline;
-        VkDeviceMemory m_vertexBufferMemory;
-        VkDeviceMemory m_indexBufferMemory;
-        VkBuffer m_vertexBuffer, m_indexBuffer;
+
+        VulkanBuffer* m_vertexBuffer = nullptr;
+        VulkanBuffer* m_indexBuffer = nullptr;
 
         std::vector<Vertex> m_vertices;
         std::vector<uint32_t> m_indices;

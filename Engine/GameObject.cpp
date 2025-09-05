@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "GameObject.h"
 #include "Render/Vulkan/VulkanControl.h"
+#include "Render/Renderer.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -15,11 +16,8 @@ namespace StudyEngine {
         VkDevice device = VulkanControl::Get()->GetDeviceContext();
         vkDestroyPipeline(device, m_pipeline, nullptr);
 
-        vkDestroyBuffer(device, m_vertexBuffer, nullptr);
-        vkDestroyBuffer(device, m_indexBuffer, nullptr);
-        vkFreeMemory(device, m_vertexBufferMemory, nullptr);
-        vkFreeMemory(device, m_indexBufferMemory, nullptr);
-
+        delete m_vertexBuffer;
+        delete m_indexBuffer;
     }
 
     void GameObject::Update(float deltaTime)
@@ -32,12 +30,12 @@ namespace StudyEngine {
         VkCommandBuffer cmd = VulkanControl::Get()->GetCommandBuffer();
         uint32_t frameInd = VulkanControl::Get()->GetCurrentFrameIndex();
         VkDeviceSize offsets = 0;
-        VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(frameInd);
+        VulkanDescriptorSet* descriptorSet = Renderer::GetCurrentDescriptorSet();
 
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanControl::Get()->getPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanControl::Get()->getPipelineLayout(), 0, 1, descriptorSet->GetDescriptorSetHandle().data(), 0, nullptr);
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-        vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer, &offsets);
-        vkCmdBindIndexBuffer(cmd, m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        m_vertexBuffer->BindBuffer();
+        m_indexBuffer->BindBuffer();
         vkCmdDrawIndexed(cmd, static_cast<uint32_t>(m_indices.size()), 1, 0, 0, 0);
     }
 
@@ -74,49 +72,9 @@ namespace StudyEngine {
 
             }
         }
-        //std::cout << m_vertices.size();
-    }
+        m_vertexBuffer = new VulkanBuffer(m_vertices.data(), sizeof(m_vertices[0]) * m_vertices.size(), VulkanBuffer::VERTEX);
+        m_indexBuffer = new VulkanBuffer(m_indices.data(), sizeof(m_indices[0]) * m_indices.size(), VulkanBuffer::INDEX);
 
-    void GameObject::CreateVertexBuffer()
-    {
-        VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertices.size();
-
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        VulkanControl::Get()->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-        void* data;
-        vkMapMemory(VulkanControl::Get()->GetDeviceContext(), stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, m_vertices.data(), (size_t)bufferSize);
-        vkUnmapMemory(VulkanControl::Get()->GetDeviceContext(), stagingBufferMemory);
-
-        VulkanControl::Get()->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vertexBuffer, m_vertexBufferMemory);
-
-        VulkanControl::Get()->copyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
-
-        vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), stagingBuffer, nullptr);
-        vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), stagingBufferMemory, nullptr);
-    }
-
-    void GameObject::CreateIndexBuffer()
-    {
-        VkDeviceSize bufferSize = sizeof(m_indices[0]) * m_indices.size();
-
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        VulkanControl::Get()->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-        void* data;
-        vkMapMemory(VulkanControl::Get()->GetDeviceContext(), stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, m_indices.data(), (size_t)bufferSize);
-        vkUnmapMemory(VulkanControl::Get()->GetDeviceContext(), stagingBufferMemory);
-
-        VulkanControl::Get()->createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_indexBuffer, m_indexBufferMemory);
-
-        VulkanControl::Get()->copyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
-
-        vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), stagingBuffer, nullptr);
-        vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), stagingBufferMemory, nullptr);
     }
 
     void GameObject::UpdateDescriptorSets()
@@ -131,5 +89,9 @@ namespace StudyEngine {
 
     void GameObject::CreateUniformBuffers()
     {
+    }
+    void GameObject::DrawIndexed()
+    {
+
     }
 }

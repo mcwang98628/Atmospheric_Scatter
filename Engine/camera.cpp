@@ -2,6 +2,8 @@
 #include "camera.h"
 #include "EventManager.h"
 #include "Render/Vulkan/vulkanControl.h"
+#include "Render/Renderer.h"
+
 
 namespace StudyEngine {
 
@@ -10,16 +12,10 @@ namespace StudyEngine {
 		VkDeviceSize cameraSize = sizeof(CameraBuffer);
 
 		cameraBuffer.resize(MAX_FRAMES_IN_FLIGHT);
-		cameraBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
-		cameraBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			VulkanControl::Get()->createBuffer(cameraSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				cameraBuffer[i],
-				cameraBufferMemory[i]);
-			vkMapMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], 0, cameraSize, 0, &cameraBufferMapped[i]);
+			cameraBuffer[i] = new VulkanUniformBuffer(cameraSize);
+		
 		}
 		updateDescriptorSets();
 		worldToCamMatrix = Matrix4::CreateTranslation(Vector3(0.0f, 1.0f, 0.0f)) * Matrix4::CreateRotationY(Math::Pi / 4);
@@ -32,15 +28,13 @@ namespace StudyEngine {
 	Camera::~Camera()
 	{
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), cameraBuffer[i], nullptr);
-			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), cameraBufferMemory[i], nullptr);
+			delete cameraBuffer[i];
 		}
 	}
 
 	void Camera::AddMovement(Vector3 dir)
 	{
 		movementInput += dir;
-		dirty = true;
 	}
 
 	void Camera::RotateCamera(float xoffset, float yoffset)
@@ -73,7 +67,6 @@ namespace StudyEngine {
 
 		newLookatMat.Invert();
 		worldToCamMatrix = newLookatMat;
-		dirty = true;
 	}
 
 	void Camera::UpdateCameraTransform(float deltaTime)
@@ -110,24 +103,9 @@ namespace StudyEngine {
 
 	void Camera::updateDescriptorSets()
 	{
-		std::vector<VkWriteDescriptorSet> descriptorWrites(2);
+		VulkanDescriptorSet* m_currentDescriptorSet = Renderer::GetCurrentDescriptorSet();
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(i);
-
-			VkDescriptorBufferInfo camInfo{};
-			camInfo.buffer = cameraBuffer[i];
-			camInfo.offset = 0;
-			camInfo.range = sizeof(CameraBuffer);
-
-			descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[i].dstSet = descriptorSet;
-			descriptorWrites[i].dstBinding = 0;
-			descriptorWrites[i].dstArrayElement = 0;
-			descriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrites[i].descriptorCount = 1;
-			descriptorWrites[i].pBufferInfo = &camInfo;
-
-			vkUpdateDescriptorSets(VulkanControl::Get()->GetDeviceContext(), 1, &descriptorWrites[i], 0, nullptr);
+			m_currentDescriptorSet->UpdateDescriptorSet(cameraBuffer[i], 0, sizeof(CameraBuffer), i);
 		}
 	}
 
@@ -159,12 +137,13 @@ namespace StudyEngine {
 
 		worldToCamMatrix = rotMat * transMat;
 		worldToCamMatrix.Invert();
-		dirty = true;
 	}
 
 	void Camera::UploadCameraBuffer()
 	{
-		memcpy(cameraBufferMapped[VulkanControl::Get()->GetCurrentFrameIndex()], &cameraData, sizeof(cameraData));
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			cameraBuffer[i]->UpdateUniformData(&cameraData, sizeof(cameraData));
+		}
 	}
 
 	void Camera::PrintCurrentCamMatrix()

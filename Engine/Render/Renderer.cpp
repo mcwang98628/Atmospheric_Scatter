@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "Renderer.h"
 #include "Vulkan/vulkanControl.h"
+#include "Vulkan/VulkanDescriptorSet.h"
 
 
 namespace StudyEngine {
+    VulkanDescriptorSet* Renderer::m_descriptorSets = nullptr;
     Renderer::Renderer()
     {
     }
@@ -26,8 +28,7 @@ namespace StudyEngine {
         vulkanController->createRenderPass();
         vulkanController->createDescriptorSetLayout();
         vulkanController->createPipelineLayout();
-        //vulkanController->createGraphicsPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv", vulkanController->graphicsPipeline1);
-        //vulkanController->createGraphicsPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv", vulkanController->graphicsPipeline2);
+
         vulkanController->createCommandPool();
         vulkanController->createDepthResources();
         vulkanController->createFramebuffers();
@@ -36,8 +37,8 @@ namespace StudyEngine {
         vulkanController->createTextureSampler();
 
         vulkanController->createDescriptorPool();
-        vulkanController->createDescriptorSets();
-        //InputManager::Instance()->Init();
+
+        m_descriptorSets = new VulkanDescriptorSet();
 
         vulkanController->createCommandBuffers();
         vulkanController->createSyncObjects();
@@ -65,6 +66,11 @@ namespace StudyEngine {
         VulkanControl::Get()->cleanUp();
 		return false;
 	}
+
+    VulkanDescriptorSet* Renderer::GetCurrentDescriptorSet()
+    {
+        return m_descriptorSets;
+    }
 
 
 };

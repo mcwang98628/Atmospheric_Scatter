@@ -29,11 +29,11 @@ bool Game::Init()
     sky = new Atmosphere();
     terrain->LoadModel(TERRAIN_PATH);
     sky->LoadModel(SKY_PATH);
-    terrain->CreateVertexBuffer();
-    terrain->CreateIndexBuffer();
+    //terrain->CreateVertexBuffer();
+    //terrain->CreateIndexBuffer();
 
-    sky->CreateVertexBuffer();
-    sky->CreateIndexBuffer();
+    //sky->CreateVertexBuffer();
+    //sky->CreateIndexBuffer();
     terrain->BindGraphicPipeline("shaders/terrainVert.spv", "shaders/terrainFrag.spv");
     sky->BindGraphicPipeline("shaders/skyVert.spv", "shaders/skyFrag.spv");
     camera = new Camera();
@@ -89,7 +89,7 @@ void Game::DrawFrame()
     sky->Draw();
     terrain->Draw();
    
-     Renderer::EndRender();
+    Renderer::EndRender();
 
 }
 

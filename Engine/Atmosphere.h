@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "GameObject.h"
-#include "engineMath.h"
+#include "Render/Vulkan/VulkanUniformBuffer.h"
 
 namespace StudyEngine {
     class STUDY_ENGINE Atmosphere : public GameObject
@@ -48,13 +48,8 @@ namespace StudyEngine {
 
         float sunAngle = .785;
 
-        std::vector<VkBuffer>        atmosphereBuffer;
-        std::vector<VkDeviceMemory>  atmosphereBufferMemory;
-        std::vector<void*>           atmosphereBufferMapped;
+        std::vector<VulkanUniformBuffer*>        atmosphereBuffer;
 
-
-        std::vector<VkBuffer>        sunBuffer;
-        std::vector<VkDeviceMemory>  sunBufferMemory;
-        std::vector<void*>           sunBufferMapped;
+        std::vector<VulkanUniformBuffer*>        sunBuffer;
     };
 }

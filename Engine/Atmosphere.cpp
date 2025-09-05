@@ -1,11 +1,10 @@
 #include "stdafx.h"
 #include "Atmosphere.h"
 #include "Render/Vulkan/vulkanControl.h"
+#include "Render/Renderer.h"
 
 namespace StudyEngine {
-
-
-	Atmosphere::Atmosphere() :GameObject()
+	Atmosphere::Atmosphere() : GameObject()
 	{
 		CreateUniformBuffers();
 		UpdateDescriptorSets();
@@ -14,11 +13,14 @@ namespace StudyEngine {
 	Atmosphere::~Atmosphere()
 	{
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), atmosphereBuffer[i], nullptr);
+			delete atmosphereBuffer[i];
+			delete sunBuffer[i];
+
+			/*vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), atmosphereBuffer[i], nullptr);
 			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), atmosphereBufferMemory[i], nullptr);
 
 			vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), sunBuffer[i], nullptr);
-			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), sunBufferMemory[i], nullptr);
+			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), sunBufferMemory[i], nullptr);*/
 		}
 	}
 
@@ -44,43 +46,19 @@ namespace StudyEngine {
 	{
 		VkCommandBuffer cmd = VulkanControl::Get()->GetCommandBuffer();
 		uint32_t frameInd = VulkanControl::Get()->GetCurrentFrameIndex();
-		memcpy(sunBufferMapped[frameInd], &m_sunBuffer, sizeof(m_sunBuffer));
+		for (VulkanUniformBuffer* each : sunBuffer)
+		{
+			each->UpdateUniformData(&m_sunBuffer, sizeof(m_sunBuffer));
+		}
 		GameObject::Draw();
 	}
 
 	void Atmosphere::UpdateDescriptorSets()
 	{
+		VulkanDescriptorSet* m_currentDescriptorSet = Renderer::GetCurrentDescriptorSet();
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			VkDescriptorSet descriptorSet = VulkanControl::Get()->getDescriptorSet(i);
-
-			VkDescriptorBufferInfo atmosphereInfo{};
-			atmosphereInfo.buffer = atmosphereBuffer[i];
-			atmosphereInfo.offset = 0;
-			atmosphereInfo.range = sizeof(AtmosphereBuffer);
-
-			VkDescriptorBufferInfo sunInfo{};
-			sunInfo.buffer = sunBuffer[i];
-			sunInfo.offset = 0;
-			sunInfo.range = sizeof(SunBuffer);
-
-			std::vector<VkWriteDescriptorSet> descriptorWrites(2);
-
-			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[0].dstSet = descriptorSet;
-			descriptorWrites[0].dstBinding = 1;
-			descriptorWrites[0].dstArrayElement = 0;
-			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrites[0].descriptorCount = 1;
-			descriptorWrites[0].pBufferInfo = &atmosphereInfo;
-
-			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[1].dstSet = descriptorSet;
-			descriptorWrites[1].dstBinding = 2;
-			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrites[1].descriptorCount = 1;
-			descriptorWrites[1].pBufferInfo = &sunInfo;
-
-			vkUpdateDescriptorSets(VulkanControl::Get()->GetDeviceContext(), 2, descriptorWrites.data(), 0, nullptr);
+			m_currentDescriptorSet->UpdateDescriptorSet(sunBuffer[i], 2, sizeof(SunBuffer), i);
+			m_currentDescriptorSet->UpdateDescriptorSet(atmosphereBuffer[i], 1, sizeof(AtmosphereBuffer), i);
 		}
 	}
 
@@ -90,28 +68,27 @@ namespace StudyEngine {
 		VkDeviceSize sunSize = sizeof(SunBuffer);
 
 		atmosphereBuffer.resize(MAX_FRAMES_IN_FLIGHT);
-		atmosphereBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
-		atmosphereBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
 		sunBuffer.resize(MAX_FRAMES_IN_FLIGHT);
-		sunBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
-		sunBufferMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			VulkanControl::Get()->createBuffer(sunSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				sunBuffer[i],
-				sunBufferMemory[i]);
-			vkMapMemory(VulkanControl::Get()->GetDeviceContext(), sunBufferMemory[i], 0, sunSize, 0, &sunBufferMapped[i]);
+			atmosphereBuffer[i] = new VulkanUniformBuffer(atmosphereSize);
+			sunBuffer[i] = new VulkanUniformBuffer(sunSize);
+			//VulkanControl::Get()->createBuffer(sunSize,
+			//	VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			//	sunBuffer[i],
+			//	sunBufferMemory[i]);
+			//vkMapMemory(VulkanControl::Get()->GetDeviceContext(), sunBufferMemory[i], 0, sunSize, 0, &sunBufferMapped[i]);
 
-			VulkanControl::Get()->createBuffer(atmosphereSize,
+			/*VulkanControl::Get()->createBuffer(atmosphereSize,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				atmosphereBuffer[i],
 				atmosphereBufferMemory[i]);
-			vkMapMemory(VulkanControl::Get()->GetDeviceContext(), atmosphereBufferMemory[i], 0, atmosphereSize, 0, &atmosphereBufferMapped[i]);
-			memcpy(atmosphereBufferMapped[i], &m_atmosphereBuffer, sizeof(m_atmosphereBuffer));
+			vkMapMemory(VulkanControl::Get()->GetDeviceContext(), atmosphereBufferMemory[i], 0, atmosphereSize, 0, &atmosphereBufferMapped[i]);*/
+			atmosphereBuffer[i]->UpdateUniformData(&m_atmosphereBuffer, sizeof(m_atmosphereBuffer));
+			// memcpy(atmosphereBufferMapped[i], &m_atmosphereBuffer, sizeof(m_atmosphereBuffer));
 		}
 	}
 }
