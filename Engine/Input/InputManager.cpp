@@ -30,6 +30,17 @@ namespace StudyEngine {
 		return m_keyStates[static_cast<int>(key)];
 	}
 
+	void InputManager::EnableMouseCallback(bool enable)
+	{
+		if (enable)
+		{
+			glfwSetInputMode(WinApplication::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+		else {
+			glfwSetInputMode(WinApplication::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+	}
+
 	void InputManager::UnregisterHandler(IInputEventHandler* handler)
 	{
 		m_handlers.erase(std::remove(m_handlers.begin(), m_handlers.end(), handler), m_handlers.end());
@@ -148,6 +159,9 @@ namespace StudyEngine {
 			break;
 		case GLFW_KEY_F:
 			return InputEvents::Key_F;
+			break;
+		case GLFW_KEY_LEFT_CONTROL:
+			return InputEvents::Key_LEFT_CONTROL;
 			break;
 		default:
 			 std::cout << "Unknown key" << glfwkey << std::endl;

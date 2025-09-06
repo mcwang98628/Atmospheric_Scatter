@@ -103,20 +103,12 @@ void Game::BindInput()
         camera->PrintCurrentCamMatrix();
     });
     inputHandler.BindMouseMove([this](float xposIn, float yposIn) {
-
-        camera->ProcessInput(xposIn, yposIn);
+        if(*enableMouseCallback) camera->ProcessInput(xposIn, yposIn);
+    });
+    inputHandler.BindKey(InputEvents::Key_LEFT_CONTROL, [this]() {
+        *enableMouseCallback = !*enableMouseCallback;
+        InputManager::EnableMouseCallback(enableMouseCallback);
     });
     InputManager::RegisterHandler(&inputHandler);
-    /*if (glfwGetKey(WindowControl::GetWindow(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-    {
-        if (enableMouseCallback)
-        {ws
-            glfwSetInputMode(WindowControl::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            enableMouseCallback = false;
-        }
-        else {
-            glfwSetInputMode(WindowControl::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            enableMouseCallback = true;
-        }
-    }*/
+   
 }

@@ -37,5 +37,5 @@ private:
 
     //void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 
-    bool enableMouseCallback = true;
+    bool* enableMouseCallback = new bool(true);
 };

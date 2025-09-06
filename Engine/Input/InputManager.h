@@ -30,12 +30,13 @@ namespace StudyEngine {
         static void GLFWCursorPosCallback(GLFWwindow* window, double xpos, double ypos);
         static void GLFWScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
+        static void EnableMouseCallback(bool enable);
+
     private:
         //static InputManager* m_inputManager;
         static std::vector<IInputEventHandler*> m_handlers;
         static std::unordered_map<int, bool> m_keyStates;
         static InputEvents ConvertGLFWKeyToEngineKey(int glfwkey);
         static int ConvertEngineToGLFWKey(InputEvents key);
-
     };
 };

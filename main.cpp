@@ -12,7 +12,6 @@ int main() {
         return EXIT_FAILURE;
     }
     game.SetRunning(running);
-    game.BindInput();
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
     while (running)
     {
