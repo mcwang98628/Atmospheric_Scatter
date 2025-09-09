@@ -15,12 +15,6 @@ namespace StudyEngine {
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			delete atmosphereBuffer[i];
 			delete sunBuffer[i];
-
-			/*vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), atmosphereBuffer[i], nullptr);
-			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), atmosphereBufferMemory[i], nullptr);
-
-			vkDestroyBuffer(VulkanControl::Get()->GetDeviceContext(), sunBuffer[i], nullptr);
-			vkFreeMemory(VulkanControl::Get()->GetDeviceContext(), sunBufferMemory[i], nullptr);*/
 		}
 	}
 
@@ -74,21 +68,7 @@ namespace StudyEngine {
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			atmosphereBuffer[i] = new VulkanUniformBuffer(atmosphereSize);
 			sunBuffer[i] = new VulkanUniformBuffer(sunSize);
-			//VulkanControl::Get()->createBuffer(sunSize,
-			//	VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			//	sunBuffer[i],
-			//	sunBufferMemory[i]);
-			//vkMapMemory(VulkanControl::Get()->GetDeviceContext(), sunBufferMemory[i], 0, sunSize, 0, &sunBufferMapped[i]);
-
-			/*VulkanControl::Get()->createBuffer(atmosphereSize,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				atmosphereBuffer[i],
-				atmosphereBufferMemory[i]);
-			vkMapMemory(VulkanControl::Get()->GetDeviceContext(), atmosphereBufferMemory[i], 0, atmosphereSize, 0, &atmosphereBufferMapped[i]);*/
 			atmosphereBuffer[i]->UpdateUniformData(&m_atmosphereBuffer, sizeof(m_atmosphereBuffer));
-			// memcpy(atmosphereBufferMapped[i], &m_atmosphereBuffer, sizeof(m_atmosphereBuffer));
 		}
 	}
 }

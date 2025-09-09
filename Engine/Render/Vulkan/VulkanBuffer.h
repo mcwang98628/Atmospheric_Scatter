@@ -12,6 +12,7 @@ namespace StudyEngine{
             ~VulkanBuffer();
             void* GetBufferHandle() const;
             void BindBuffer();
+
         private:
             struct Impl;
             std::unique_ptr<Impl> m_impl;

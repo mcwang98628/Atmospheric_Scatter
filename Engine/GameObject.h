@@ -2,11 +2,10 @@
 
 #include "Render/Vulkan/VertexFormat.h"
 #include "Render/Vulkan/VulkanBuffer.h"
+#include "Render/Vulkan/VulkanPipeline.h"
 
 typedef struct VkDeviceMemory_T* VkDeviceMemory;
-typedef struct VkDescriptorSet_T* VkDescriptorSet;
 typedef struct VkCommandBuffer_T* VkCommandBuffer;
-typedef struct VkPipeline_T* VkPipeline;
 
 
 namespace StudyEngine {
@@ -26,14 +25,12 @@ namespace StudyEngine {
         virtual void CreateUniformBuffers();
         virtual void DrawIndexed();
 
-
-
         struct RenderData {
             Matrix4 m_transform;
         };
 
     private:
-        VkPipeline m_pipeline;
+        VulkanPipeline* m_pipeline;
 
         VulkanBuffer* m_vertexBuffer = nullptr;
         VulkanBuffer* m_indexBuffer = nullptr;

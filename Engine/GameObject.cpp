@@ -14,7 +14,7 @@ namespace StudyEngine {
     GameObject::~GameObject()
     {
         VkDevice device = VulkanControl::Get()->GetDeviceContext();
-        vkDestroyPipeline(device, m_pipeline, nullptr);
+        delete m_pipeline;
 
         delete m_vertexBuffer;
         delete m_indexBuffer;
@@ -33,7 +33,7 @@ namespace StudyEngine {
         VulkanDescriptorSet* descriptorSet = Renderer::GetCurrentDescriptorSet();
 
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanControl::Get()->getPipelineLayout(), 0, 1, descriptorSet->GetDescriptorSetHandle().data(), 0, nullptr);
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+        m_pipeline->BindCommandBuffer(cmd);
         m_vertexBuffer->BindBuffer();
         m_indexBuffer->BindBuffer();
         vkCmdDrawIndexed(cmd, static_cast<uint32_t>(m_indices.size()), 1, 0, 0, 0);
@@ -84,7 +84,7 @@ namespace StudyEngine {
 
     void GameObject::BindGraphicPipeline(std::string vertShaderPath, std::string fragShaderPath)
     {
-        VulkanControl::Get()->createGraphicsPipeline(vertShaderPath, fragShaderPath, m_pipeline);
+        m_pipeline = new VulkanPipeline(vertShaderPath, fragShaderPath);
     }
 
     void GameObject::CreateUniformBuffers()

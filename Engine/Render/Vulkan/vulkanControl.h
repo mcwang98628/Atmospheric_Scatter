@@ -99,7 +99,6 @@ namespace StudyEngine {
         void createRenderPass();
         void createDescriptorSetLayout();
         void createPipelineLayout();
-        void createGraphicsPipeline(std::string vertShaderPath, std::string fragShaderPath, VkPipeline& targetPipeline);
         void createCommandPool();
         void createDepthResources();
         void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
@@ -113,7 +112,7 @@ namespace StudyEngine {
         void beginRenderPass(VkCommandBuffer commandBuffer);
         void endRenderPass(VkCommandBuffer commandBuffer);
         void recreateSwapChain(GLFWwindow* window);
-        //VkDescriptorSet getDescriptorSet(uint32_t frameIndex);
+        VkRenderPass getRenderPass() { return renderPass; }
         VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
         void cleanUp();
 
